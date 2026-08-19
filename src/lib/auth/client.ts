@@ -64,12 +64,22 @@ function setBearerToken(token: string | null): void {
  * The sandbox live preview runs this app inside an iframe on a `*.grok-sandbox.com`
  * host, where a full-page redirect to the broker can't work — so sign-in uses a
  * popup there and a normal redirect everywhere else.
+ *
+ * Published apps on a **custom domain** can also be framed (Grok chrome, a
+ * remint preview). Detect any iframe, not only grok-sandbox, so Google/X aren't
+ * asked to load inside a nested frame.
  */
-function inLivePreview(): boolean {
-  return (
-    typeof window !== "undefined" &&
-    window.location.hostname.endsWith(".grok-sandbox.com")
-  );
+function needsPopupSignIn(): boolean {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname.toLowerCase();
+  if (host === "grok-sandbox.com" || host.endsWith(".grok-sandbox.com")) {
+    return true;
+  }
+  try {
+    return window.parent !== window;
+  } catch {
+    return true;
+  }
 }
 
 /** Message the popup posts back to the opener once sign-in completes. */
@@ -79,12 +89,15 @@ type PopupMessage = { source: "grok-auth-popup"; token: string | null; error?: s
  * Start sign-in with one upstream provider (`providerId` from `GROK_PROVIDERS`),
  * federating through the Grok auth broker.
  *
- * - **Live preview** (`*.grok-sandbox.com` iframe): opens a POPUP to
+ * - **Live preview / framed custom domain**: opens a POPUP to
  *   `/auth/popup`, served by the template Vite plugin (see `vite.config.ts` +
- *   `popup.server.ts`) — 302s to the broker/upstream login (no app chrome) and,
- *   on return, posts the session bearer token back. We store it and refresh the
- *   session; no top-level navigation of the iframe to the broker.
- * - **Deployed** (and local non-iframe): a normal full-page redirect into the broker.
+ *   `popup.server.ts`) and, when deployed, `server/middleware/auth-popup.ts` —
+ *   302s to the broker/upstream login (no app chrome) and, on return, posts the
+ *   session bearer token back. We store it and refresh the session; no top-level
+ *   navigation of the iframe to the broker.
+ * - **Deployed top-level** (custom domain included): a normal full-page redirect
+ *   into the broker. Dynamic `baseURL` in `server.ts` keeps `redirect_uri` on
+ *   the host the visitor actually used.
  *
  * Either way it clears any existing local session FIRST so switching providers
  * actually switches identity.
@@ -99,13 +112,13 @@ export async function signIn(
   // Open the popup SYNCHRONOUSLY on the user gesture — before any await
   // (including signOut). Awaiting first drops user-gesture privilege in some
   // browsers when the opener is a cross-origin live-preview iframe.
-  const popup = inLivePreview() ? openSignInPopup(providerId) : null;
+  const popup = needsPopupSignIn() ? openSignInPopup(providerId) : null;
 
   // Clear any prior session so switching providers actually switches identity.
   // In the live preview the iframe has no session cookie — only a bearer token —
   // so skip the network signOut when there's nothing to clear.
   const hadBearer = Boolean(getBearerToken());
-  if (hadBearer || !inLivePreview()) {
+  if (hadBearer || !needsPopupSignIn()) {
     try {
       await authClient.signOut();
     } catch {
@@ -114,7 +127,7 @@ export async function signIn(
   }
   setBearerToken(null);
 
-  if (inLivePreview()) {
+  if (needsPopupSignIn()) {
     if (!popup) throw new Error("Pop-up blocked — allow pop-ups for sign-in");
     const token = await waitForPopupToken(popup);
     if (!token) throw new Error("Sign-in was cancelled or failed");

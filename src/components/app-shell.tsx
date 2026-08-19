@@ -5,6 +5,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useProgress } from "@/lib/progress-store";
 import { cn } from "@/lib/utils";
 import { ProgressSync } from "@/components/progress-sync";
+import { AzulejoMark } from "@/components/azulejo-mark";
 
 const nav = [
   { to: "/", label: "Today", icon: House, match: (p: string) => p === "/" },
@@ -41,9 +42,7 @@ export function AppShell({
       <header className="sticky top-0 z-30 border-b border-border/80 bg-bg/90 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-2xl items-center justify-between gap-3 px-4">
           <Link to="/" className="flex items-center gap-2 no-underline">
-            <span className="grid size-8 place-items-center rounded-[var(--radius-sm)] bg-accent font-display text-sm font-semibold text-accent-fg">
-              B
-            </span>
+            <AzulejoMark />
             <span className="font-display text-lg font-medium tracking-tight">Bica</span>
           </Link>
           <div className="hidden items-center gap-1 md:flex">

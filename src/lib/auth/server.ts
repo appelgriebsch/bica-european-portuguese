@@ -86,9 +86,15 @@ export const authConfigured =
 // This app's own Better Auth origin. When deployed the deployer injects the
 // public URL. In the sandbox live preview there's no fixed URL (each preview gets
 // a dynamic `*.grok-sandbox.com` host), so we hand Better Auth a dynamic baseURL:
-// it derives the origin per-request from the (proxied) host, validated against the
-// preview allowlist, which makes the OAuth `redirect_uri` the concrete preview URL
-// the broker's preview client accepts.
+// it derives the origin per-request from the (proxied) host, validated against an
+// allowlist, which makes the OAuth `redirect_uri` the concrete URL the broker
+// accepts.
+//
+// Published apps with a **custom domain** (and Vercel production/preview URLs)
+// must use the same dynamic path. A locked string `BETTER_AUTH_URL` mints the
+// OAuth callback and CSRF allowlist for `*.grok.me` / `*.vercel.app` only, so
+// sign-in from the custom host fails with "Invalid origin" / a cookie on the
+// wrong site.
 const explicitBaseURL = env("BETTER_AUTH_URL");
 // Explicit `string[]` (not a readonly tuple) — Better Auth's DynamicBaseURLConfig
 // requires a mutable `allowedHosts: string[]`.
@@ -101,27 +107,129 @@ const LOCAL_DEV_ORIGINS: string[] = [
   "http://127.0.0.1:8080",
   "http://[::1]:8080",
 ];
-const baseURL = explicitBaseURL ?? {
-  // Include loopback hosts so dynamic baseURL resolves for local email/password
-  // (not only the preview wildcard).
-  allowedHosts: [...previewAllowedHosts, "localhost", "127.0.0.1", "[::1]"],
+
+/** Hostname (optionally with port) from a URL or bare host string. */
+function hostFromValue(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  try {
+    const withProto = /:\/\//.test(trimmed) ? trimmed : `https://${trimmed}`;
+    const host = new URL(withProto).host;
+    return host || undefined;
+  } catch {
+    const host = trimmed.replace(/^https?:\/\//i, "").split("/")[0]?.trim();
+    return host || undefined;
+  }
+}
+
+/**
+ * Apex ↔ www twins for a real custom domain. Skip platform hosts — `www` on
+ * `*.grok.me` / `*.vercel.app` is not how those apps are served.
+ */
+function withWwwVariants(host: string): string[] {
+  const h = host.toLowerCase();
+  if (
+    h === "localhost" ||
+    h.startsWith("localhost:") ||
+    h === "127.0.0.1" ||
+    h === "[::1]" ||
+    h.endsWith(".vercel.app") ||
+    h.endsWith(".grok-sandbox.com") ||
+    h.endsWith(".grok.me")
+  ) {
+    return [host];
+  }
+  if (h.startsWith("www.")) return [host, host.slice(4)];
+  if (h.split(".").length === 2) return [host, `www.${h}`];
+  return [host];
+}
+
+/**
+ * Extra hosts this deployment is actually served on: the injected Better Auth
+ * URL, the publish hostname (custom domain), Vercel URLs, and any explicit
+ * `BETTER_AUTH_TRUSTED_ORIGINS` list (comma/space separated).
+ */
+function extraPublicHosts(): string[] {
+  const hosts = new Set<string>();
+  const viteHost =
+    env("VITE_PUBLIC_HOSTNAME") ??
+    (typeof import.meta !== "undefined"
+      ? String(
+          (import.meta as { env?: { VITE_PUBLIC_HOSTNAME?: string } }).env
+            ?.VITE_PUBLIC_HOSTNAME ?? "",
+        ).trim() || undefined
+      : undefined);
+  const extraOrigins = env("BETTER_AUTH_TRUSTED_ORIGINS");
+  const candidates = [
+    explicitBaseURL,
+    viteHost,
+    env("VERCEL_PROJECT_PRODUCTION_URL"),
+    env("VERCEL_URL"),
+    env("VERCEL_BRANCH_URL"),
+    ...(extraOrigins ? extraOrigins.split(/[\s,]+/) : []),
+  ];
+  for (const value of candidates) {
+    const host = hostFromValue(value);
+    if (!host) continue;
+    for (const variant of withWwwVariants(host)) hosts.add(variant);
+  }
+  return [...hosts];
+}
+
+const publicHosts = extraPublicHosts();
+
+const allowedHosts: string[] = [
+  ...previewAllowedHosts,
+  "localhost",
+  "127.0.0.1",
+  "[::1]",
+  "*.vercel.app",
+  ...publicHosts,
+];
+
+const baseURL = {
+  allowedHosts,
   // `auto` → trust both http:// and https:// expansions of allowedHosts
-  // (preview is https; local dev is http).
+  // (preview is https; local dev is http; custom domains are https).
   protocol: "auto" as const,
-  fallback: "http://localhost:8080",
+  fallback: explicitBaseURL ?? "http://localhost:8080",
 };
 
-// Origins Better Auth accepts on credentialed POSTs (sign-up/sign-in, etc.).
-// Missing entries here surface as FORBIDDEN "Invalid origin".
-const trustedOrigins: string[] = explicitBaseURL
-  ? [explicitBaseURL, ...LOCAL_DEV_ORIGINS]
-  : [
-      // Host wildcards (matched against Origin's host)
-      ...previewAllowedHosts,
-      // Full-origin wildcards (matched against Origin)
-      ...previewAllowedHosts.flatMap((host) => [`https://${host}`, `http://${host}`]),
-      ...LOCAL_DEV_ORIGINS,
-    ];
+const staticTrustedOrigins: string[] = [
+  // Host wildcards (matched against Origin's host)
+  ...previewAllowedHosts,
+  // Full-origin wildcards (matched against Origin)
+  ...previewAllowedHosts.flatMap((host) => [`https://${host}`, `http://${host}`]),
+  ...LOCAL_DEV_ORIGINS,
+  ...(explicitBaseURL ? [explicitBaseURL] : []),
+  ...publicHosts.flatMap((h) => [`https://${h}`, `http://${h}`]),
+];
+
+/**
+ * CSRF allowlist. Static entries cover preview / local / the known public
+ * hosts. The request callback also trusts Origin when it matches this
+ * request's `Host` — same-origin by definition, so a newly mapped custom
+ * domain isn't blocked before env catches up.
+ */
+const trustedOrigins = (request?: Request): string[] => {
+  if (!request) return [...staticTrustedOrigins];
+  const origins = [...staticTrustedOrigins];
+  const originHeader = request.headers.get("origin");
+  if (!originHeader) return origins;
+  try {
+    const originHost = new URL(originHeader).host.toLowerCase();
+    const requestHost = request.headers
+      .get("host")
+      ?.split(",")[0]
+      ?.trim()
+      .toLowerCase();
+    if (requestHost && originHost === requestHost) origins.push(originHeader);
+  } catch {
+    /* ignore malformed Origin */
+  }
+  return origins;
+};
 
 const databaseUrl = env("DATABASE_URL");
 
@@ -214,8 +322,13 @@ export const auth = betterAuth({
   // Domain), so we drop its auto prefix (`useSecureCookies: false`) and set
   // Secure + the names ourselves. (Browsers allow Secure cookies on
   // `http://localhost`, so local dev still works.)
+  //
+  // `trustedProxyHeaders`: custom domains on Vercel/CDN send the public host in
+  // `x-forwarded-host`. Combined with the allowedHosts allowlist this is how
+  // OAuth `redirect_uri` follows the domain the visitor actually used.
   advanced: {
     useSecureCookies: false,
+    trustedProxyHeaders: true,
     defaultCookieAttributes: { secure: true, sameSite: "lax", path: "/" },
     cookies: {
       session_token: { name: SESSION_TOKEN_COOKIE },

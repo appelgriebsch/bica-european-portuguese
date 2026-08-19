@@ -39,8 +39,8 @@ function pgliteBootstrapPlugin(): Plugin {
  *
  * `signIn` (client.ts) opens `/auth/popup?providerId=…` in a top-level window.
  * This middleware runs before TanStack Start, calls `handleAuthPopupRequest`,
- * and returns the 302 / completion HTML. Deployed apps do not use the popup
- * (full-page OAuth redirect), so `apply: "serve"` is enough.
+ * and returns the 302 / completion HTML. Deployed apps that are framed (custom
+ * domain inside Grok chrome) use the same path via `server/middleware/auth-popup.ts`.
  */
 function authPopupPlugin(): Plugin {
   return {
