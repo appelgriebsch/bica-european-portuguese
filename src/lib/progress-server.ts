@@ -3,12 +3,21 @@ import { z } from "zod";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import type { LessonResult } from "@/lib/progress-store";
+import type { SrsCard } from "@/lib/srs";
 
 const resultSchema = z.object({
   lessonId: z.string().min(1).max(80),
   quizScore: z.number().int().min(0).max(20),
   quizTotal: z.number().int().min(1).max(20),
   xp: z.number().int().min(0).max(200),
+});
+
+const srsCardSchema = z.object({
+  interval: z.number(),
+  ease: z.number(),
+  due: z.string(),
+  reps: z.number(),
+  lapses: z.number(),
 });
 
 const snapshotSchema = z.object({
@@ -24,6 +33,7 @@ const snapshotSchema = z.object({
   xp: z.number(),
   streak: z.number(),
   lastStudyDate: z.string().nullable(),
+  cards: z.record(z.string(), srsCardSchema).optional(),
 });
 
 export const fetchProgress = createServerFn({ method: "GET" })
@@ -45,8 +55,9 @@ export const fetchProgress = createServerFn({ method: "GET" })
       streak: number;
       last_study_date: string | null;
       total_xp: number;
+      vocab_cards: Record<string, SrsCard> | string | null;
     }>`
-      select streak, last_study_date, total_xp
+      select streak, last_study_date, total_xp, vocab_cards
       from user_stats
       where user_id = ${context.userId}
     `;
@@ -60,11 +71,22 @@ export const fetchProgress = createServerFn({ method: "GET" })
       };
     }
     const s = stats[0];
+    let cards: Record<string, SrsCard> = {};
+    const raw = s?.vocab_cards;
+    if (raw && typeof raw === "object") cards = raw;
+    else if (typeof raw === "string") {
+      try {
+        cards = JSON.parse(raw) as Record<string, SrsCard>;
+      } catch {
+        cards = {};
+      }
+    }
     return {
       completed,
       xp: s?.total_xp ?? 0,
       streak: s?.streak ?? 0,
       lastStudyDate: s?.last_study_date ?? null,
+      cards,
     };
   });
 
@@ -100,19 +122,22 @@ export const saveProgressSnapshot = createServerFn({ method: "POST" })
   .validator((input: unknown) => snapshotSchema.parse(input))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
+    const cardsJson = JSON.stringify(data.cards ?? {});
     await sql`
-      insert into user_stats (user_id, streak, last_study_date, total_xp, updated_at)
+      insert into user_stats (user_id, streak, last_study_date, total_xp, vocab_cards, updated_at)
       values (
         ${context.userId},
         ${data.streak},
         ${data.lastStudyDate},
         ${data.xp},
+        ${cardsJson}::jsonb,
         now()
       )
       on conflict (user_id) do update set
         streak = excluded.streak,
         last_study_date = excluded.last_study_date,
         total_xp = excluded.total_xp,
+        vocab_cards = excluded.vocab_cards,
         updated_at = now()
     `;
     for (const [lessonId, row] of Object.entries(data.completed)) {

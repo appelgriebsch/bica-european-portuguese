@@ -32,7 +32,7 @@ function ListenPlayer({ bulletin }: { bulletin: RadioBulletin }) {
   const user = useCurrentUser();
   const [phase, setPhase] = useState<"listen" | "quiz" | "done">("listen");
   const [playing, setPlaying] = useState(false);
-  const [slow, setSlow] = useState(true);
+  const [slow, setSlow] = useState(bulletin.level !== "C1");
   const [showScript, setShowScript] = useState(false);
   const [correct, setCorrect] = useState(0);
   const next = radioBulletins[radioBulletins.findIndex((b) => b.id === bulletin.id) + 1];

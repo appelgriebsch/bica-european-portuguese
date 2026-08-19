@@ -14,8 +14,8 @@ function PathPage() {
     <AppShell>
       <h1 className="font-display text-3xl font-medium tracking-tight">The path</h1>
       <p className="mt-2 text-muted">
-        A1 through B2, in European Portuguese. Jump in anywhere — adults skip
-        what they already know. After each level, a grammar drill to lock the
+        A1 through C1, in European Portuguese. Jump in anywhere — adults skip
+        what they already know. After each level, grammar drills to lock the
         pattern.
       </p>
 

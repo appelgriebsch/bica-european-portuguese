@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { BookOpen, Check, Headphones, MessageCircle, PenLine, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import {
+  dueVocab,
   firstIncompleteOf,
   grammarDrills,
   levels,
@@ -11,12 +12,13 @@ import {
   workingLevel,
 } from "@/data/curriculum";
 import { useProgress } from "@/lib/progress-store";
-import { cn } from "@/lib/utils";
+import { cn, todayKey } from "@/lib/utils";
 
 export const Route = createFileRoute("/practice")({ component: PracticePage });
 
 function PracticePage() {
   const completed = useProgress((s) => s.completed);
+  const cards = useProgress((s) => s.cards);
   const floor = useProgress((s) => s.floor);
   const doneIds = new Set(Object.keys(completed));
   const level = workingLevel(doneIds, floor);
@@ -26,6 +28,8 @@ function PracticePage() {
   const radioDone = radioBulletins.filter((b) => doneIds.has(b.id)).length;
   const readDone = readingPieces.filter((p) => doneIds.has(p.id)).length;
   const gramDone = grammarDrills.filter((d) => doneIds.has(d.id)).length;
+  const dueCount = dueVocab(Object.keys(completed), cards, todayKey()).length;
+
 
   return (
     <AppShell>
@@ -138,13 +142,15 @@ function PracticePage() {
             <RotateCcw className="mt-0.5 size-5 shrink-0 text-accent" />
             <span>
               <span className="block text-xs font-medium uppercase tracking-wider text-accent">
-                Review
+                Review{dueCount > 0 ? ` · ${dueCount} due` : ""}
               </span>
               <span className="mt-1 block font-display text-xl font-medium text-fg">
                 Palavras
               </span>
               <span className="mt-1 block text-sm text-muted">
-                A three-minute pass through words from lessons you have finished.
+                {dueCount > 0
+                  ? "Flip, listen, type. Due today, then tomorrow, a week, a month."
+                  : "Finish a lesson and new words join the pile."}
               </span>
             </span>
           </Link>

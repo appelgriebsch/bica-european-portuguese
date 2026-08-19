@@ -1,10 +1,10 @@
 import { r as __exportAll$1 } from "../_runtime.mjs";
+import { a as toResponse, i as setCookie, r as H3Event } from "../_libs/@tanstack/react-start+[...].mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { A as executeRewriteInput, D as resolveManifestAssetLink, E as getStylesheetHref, F as isRedirect, I as isResolvedRedirect, L as parseRedirect, O as resolveManifestCssLink, R as rootRouteId, T as getScriptPreloadAttrs, a as isSsrResponse, c as stripSsrResponseBody, f as RouterProvider, i as disposeSsrResponseDetached, j as invariant, k as _getRenderedMatches, n as bindSsrResponseToRequest, o as normalizeSsrResponse, r as defineHandlerCallback, s as replaceSsrResponse, t as renderRouterToStream, z as isNotFound } from "../_libs/@tanstack/react-router+[...].mjs";
 import { n as createMemoryHistory } from "../_libs/tanstack__history.mjs";
 import { a as getOrigin, c as createSerializationAdapter, d as toCrossJSONAsync, f as toCrossJSONStream, i as getNormalizedURL, l as makeSerovalPlugin, n as mergeHeaders, o as defaultSerovalPlugins, r as attachRouterServerSsrUtils, s as createRawStreamRPCPlugin, t as waitForRequest, u as fromJSON } from "../_libs/@tanstack/router-core+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { n as setCookie, r as toResponse, t as H3Event } from "../_libs/h3-v2+rou3.mjs";
 import { AsyncLocalStorage } from "node:async_hooks";
 //#region node_modules/.nitro/vite/services/ssr/index.js
 var ssr_exports = /* @__PURE__ */ __exportAll$1({
@@ -118,7 +118,7 @@ var HEADERS = { TSS_SHELL: "X-TSS_SHELL" };
 * the dev styles URL for route-scoped CSS collection.
 */
 async function getStartManifest(matchedRoutes) {
-	const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-CjbkLC4X.mjs");
+	const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-CviCC3Nk.mjs");
 	const startManifest = tsrStartManifest();
 	let routes = startManifest.routes;
 	routes[rootRouteId];
@@ -140,7 +140,7 @@ async function getStartManifest(matchedRoutes) {
 var manifest = {
 	"5ad1aca74ebc7df070b50ea731a261d32a18cd56aca5a1812d1501075841d06a": {
 		functionName: "saveLessonProgress_createServerFn_handler",
-		importer: () => import("./progress-server-BloISU8H.mjs")
+		importer: () => import("./progress-server-CAdZ4Jx6.mjs")
 	},
 	"72e18736868655d6a43e46be71c05c1fe57cc9692bdece56a54c23f6c56512ea": {
 		functionName: "synthesizePt_createServerFn_handler",
@@ -148,15 +148,15 @@ var manifest = {
 	},
 	"a6c1db121df31c780863651ffdf226f842441dec27cf2216ec61f708eb327331": {
 		functionName: "sendChat_createServerFn_handler",
-		importer: () => import("./chat-server-DooPDjYn.mjs")
+		importer: () => import("./chat-server-zkmopXol.mjs")
 	},
 	"af57669d5ec8bdac9ada812c4dd1ae6c5b27e4b2b4438c549de2303c0df006af": {
 		functionName: "saveProgressSnapshot_createServerFn_handler",
-		importer: () => import("./progress-server-BloISU8H.mjs")
+		importer: () => import("./progress-server-CAdZ4Jx6.mjs")
 	},
 	"b6bdbb42b54a50022135003565247329e49dfefe10c3c50e5112907dea6f160b": {
 		functionName: "fetchProgress_createServerFn_handler",
-		importer: () => import("./progress-server-BloISU8H.mjs")
+		importer: () => import("./progress-server-CAdZ4Jx6.mjs")
 	}
 };
 async function getServerFnById(id, access) {
@@ -1426,7 +1426,7 @@ var getBaseManifest = getProdBaseManifest;
 var createEarlyHintsForRequest = createEarlyHintsCollector;
 async function loadEntries() {
 	const [routerEntry, startEntry, pluginAdapters] = await Promise.all([
-		import("./router-DbDlD8tM.mjs").then((n) => n.t),
+		import("./router-o4MRfPxQ.mjs").then((n) => n.t),
 		import("./start-5Z2QO8AU.mjs"),
 		import("./empty-plugin-adapters-D9UWiqvJ.mjs")
 	]);

@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, BookOpen, Clock3, Headphones, MessageCircle, PenLine } from "lucide-react";
+import { ArrowRight, BookOpen, Clock3, Headphones, MessageCircle, PenLine, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { StartLevelPicker } from "@/components/start-level";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
+  dueVocab,
   firstIncomplete,
   firstIncompleteOf,
   grammarDrills,
@@ -17,7 +18,7 @@ import {
 } from "@/data/curriculum";
 import { warmVoices } from "@/lib/tts";
 import { useProgress } from "@/lib/progress-store";
-import { greetingForHour } from "@/lib/utils";
+import { greetingForHour, todayKey } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -26,6 +27,7 @@ function Home() {
   const xp = useProgress((s) => s.xp);
   const streak = useProgress((s) => s.streak);
   const floor = useProgress((s) => s.floor);
+  const cards = useProgress((s) => s.cards);
   const [hour, setHour] = useState(9);
 
   useEffect(() => {
@@ -40,6 +42,7 @@ function Home() {
   const nextRadio = firstIncompleteOf(radioBulletins, doneIds, level);
   const nextRead = firstIncompleteOf(readingPieces, doneIds, level);
   const nextGram = firstIncompleteOf(grammarDrills, doneIds, level);
+  const dueCount = dueVocab(Object.keys(completed), cards, todayKey()).length;
   const doneCount = lessons.filter((l) => doneIds.has(l.id)).length;
   const pct = Math.round((doneCount / lessons.length) * 100);
   const todayDone = Object.values(completed).some((r) => {
@@ -109,6 +112,26 @@ function Home() {
         </div>
         <Progress value={pct} />
       </div>
+
+      <Link
+        to="/review"
+        className="mt-5 flex items-start gap-3 rounded-[var(--radius-lg)] bg-surface p-4 no-underline shadow-[var(--shadow-border)] transition-shadow duration-[var(--motion-quick)] hover:shadow-[var(--shadow-border-hover)]"
+      >
+        <RotateCcw className="mt-0.5 size-5 shrink-0 text-accent" />
+        <span className="min-w-0">
+          <span className="block text-xs font-medium uppercase tracking-wider text-accent">
+            Palavras{dueCount > 0 ? ` · ${dueCount} due` : ""}
+          </span>
+          <span className="mt-1 block font-medium text-fg">
+            {dueCount > 0 ? "Words waiting" : "Caught up"}
+          </span>
+          <span className="mt-1 block text-sm text-muted">
+            {dueCount > 0
+              ? "Flip, listen, type. Three minutes, then back to the path."
+              : "Finish a lesson and new words join the pile."}
+          </span>
+        </span>
+      </Link>
 
       <section className="mt-8 grid gap-3 sm:grid-cols-2">
         <Link

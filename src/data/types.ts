@@ -1,4 +1,4 @@
-export type CefrLevel = "A1" | "A2" | "B1" | "B2";
+export type CefrLevel = "A1" | "A2" | "B1" | "B2" | "C1";
 
 export type Skill = "speak" | "listen" | "read" | "mix";
 
@@ -101,7 +101,7 @@ export type ReadingPiece = {
   id: string;
   level: CefrLevel;
   minutes: number;
-  kind: "notice" | "message" | "news" | "page";
+  kind: "notice" | "message" | "news" | "page" | "column";
   source: string;
   title: string;
   titlePt: string;

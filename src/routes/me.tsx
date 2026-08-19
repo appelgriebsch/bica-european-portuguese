@@ -91,7 +91,7 @@ function MePage() {
           </div>
           {vocab.length > 0 && (
             <Button asChild variant="ghost" size="sm">
-              <Link to="/review">Review</Link>
+              <Link to="/review">Palavras</Link>
             </Button>
           )}
         </div>
@@ -100,7 +100,7 @@ function MePage() {
         ) : (
           <ul className="mt-3 divide-y divide-border rounded-[var(--radius-lg)] bg-surface shadow-[var(--shadow-border)]">
             {vocab.map((item) => (
-              <li key={item.pt + item.en} className="flex items-center gap-2 px-3 py-2">
+              <li key={item.id} className="flex items-center gap-2 px-3 py-2">
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">{item.pt}</p>
                   <p className="truncate text-sm text-muted">{item.en}</p>

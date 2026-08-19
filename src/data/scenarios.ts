@@ -169,4 +169,18 @@ export const speakScenarios: SpeakScenario[] = [
     goals: ["Use ter saudades de", "Qualify with já menos", "Ask them something back"],
     image: "/scenes/radio.jpg",
   },
+  {
+    id: "mesa-serio",
+    level: "C1",
+    minutes: 12,
+    title: "The table, in earnest",
+    titlePt: "A mesa, a sério",
+    setting:
+      "Dinner in Arroios. Housing again. Concede what is true. Keep a piece. Do not lecture. Leave with the bread still warm.",
+    partner: "Joana, a friend of a friend",
+    openerPt: "Esta cidade já não é para quem cá vive. Ponto. Ou ainda achas que não?",
+    openerEn: "This city is no longer for the people who live here. Full stop. Or do you still think otherwise?",
+    goals: ["Use ainda que + subjunctive", "Quote without owning: há quem diga", "Land with podemos ficar por aqui"],
+    image: "/scenes/tram.jpg",
+  },
 ];

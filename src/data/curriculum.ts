@@ -2,6 +2,7 @@ import { a1Lessons } from "./a1";
 import { a2Lessons } from "./a2";
 import { b1Lessons } from "./b1";
 import { b2Lessons } from "./b2";
+import { c1Lessons } from "./c1";
 import { grammarDrills } from "./grammar";
 import { radioBulletins } from "./radio";
 import { readingPieces } from "./reading";
@@ -13,7 +14,19 @@ import type {
   RadioBulletin,
   ReadingPiece,
   Unit,
+  VocabItem,
 } from "./types";
+import type { SrsCard } from "@/lib/srs";
+import { isDue } from "@/lib/srs";
+import { normalizePt } from "@/lib/utils";
+
+export const cefrRank: Record<CefrLevel, number> = {
+  A1: 0,
+  A2: 1,
+  B1: 2,
+  B2: 3,
+  C1: 4,
+};
 
 export const levels: { id: CefrLevel; title: string; blurb: string }[] = [
   {
@@ -35,6 +48,11 @@ export const levels: { id: CefrLevel; title: string; blurb: string }[] = [
     id: "B2",
     title: "Stay in the room",
     blurb: "Feeling, literature, disagreement, and the queue that turns into a chat.",
+  },
+  {
+    id: "C1",
+    title: "The country at speed",
+    blurb: "A bulletin without the glossary, a column, an argument you don't leave.",
   },
 ];
 
@@ -95,6 +113,14 @@ export const units: Unit[] = [
     blurb: "Feeling, pages, argument, the street.",
     image: "/scenes/books.jpg",
   },
+  {
+    id: "c1-speed",
+    level: "C1",
+    title: "At speed",
+    titlePt: "Em velocidade",
+    blurb: "Radio, a column, the table that turns political.",
+    image: "/scenes/radio.jpg",
+  },
 ];
 
 export const lessons: Lesson[] = [
@@ -102,9 +128,50 @@ export const lessons: Lesson[] = [
   ...a2Lessons,
   ...b1Lessons,
   ...b2Lessons,
+  ...c1Lessons,
 ];
 
 export { speakScenarios, radioBulletins, readingPieces, grammarDrills };
+
+export type CatalogVocab = VocabItem & {
+  id: string;
+  lessonId: string;
+  level: CefrLevel;
+};
+
+export function catalogVocab(): CatalogVocab[] {
+  const out: CatalogVocab[] = [];
+  const seen = new Set<string>();
+  for (const lesson of lessons) {
+    for (const section of lesson.sections) {
+      if (section.type !== "vocab") continue;
+      for (const item of section.items) {
+        const id = `${lesson.id}:${normalizePt(item.pt)}`;
+        if (seen.has(id)) continue;
+        seen.add(id);
+        out.push({ ...item, id, lessonId: lesson.id, level: lesson.level });
+      }
+    }
+  }
+  return out;
+}
+
+export function vocabFromCompleted(completedIds: string[]): CatalogVocab[] {
+  const done = new Set(completedIds);
+  return catalogVocab().filter((item) => done.has(item.lessonId));
+}
+
+export function dueVocab(
+  completedIds: string[],
+  cards: Record<string, SrsCard>,
+  today: string,
+  level?: CefrLevel,
+): CatalogVocab[] {
+  return vocabFromCompleted(completedIds).filter((item) => {
+    if (level && item.level !== level) return false;
+    return isDue(cards[item.id], today);
+  });
+}
 
 export function getLesson(id: string): Lesson | undefined {
   return lessons.find((l) => l.id === id);
@@ -137,17 +204,15 @@ export function nextLesson(id: string): Lesson | undefined {
 }
 
 export function firstIncomplete(completedIds: Set<string>, floor: CefrLevel = "A1"): Lesson {
-  const rank: Record<CefrLevel, number> = { A1: 0, A2: 1, B1: 2, B2: 3 };
-  const min = rank[floor];
-  const pool = lessons.filter((l) => rank[l.level] >= min);
+  const min = cefrRank[floor];
+  const pool = lessons.filter((l) => cefrRank[l.level] >= min);
   return pool.find((l) => !completedIds.has(l.id)) ?? pool[pool.length - 1] ?? lessons[lessons.length - 1]!;
 }
 
 export function workingLevel(completedIds: Set<string>, floor: CefrLevel = "A1"): CefrLevel {
-  const rank: Record<CefrLevel, number> = { A1: 0, A2: 1, B1: 2, B2: 3 };
   if (completedIds.size === 0) return floor;
   const est = estimatedLevel(completedIds);
-  return rank[est] >= rank[floor] ? est : floor;
+  return cefrRank[est] >= cefrRank[floor] ? est : floor;
 }
 
 export function firstIncompleteOf<T extends { id: string; level: CefrLevel }>(
@@ -169,14 +234,6 @@ export function estimatedLevel(completedIds: Set<string>): CefrLevel {
     return done >= Math.ceil(inLevel.length * 0.5);
   });
   return found?.id ?? "A1";
-}
-
-export function vocabFromCompleted(completedIds: string[]) {
-  return lessons
-    .filter((l) => completedIds.includes(l.id))
-    .flatMap((l) =>
-      l.sections.flatMap((s) => (s.type === "vocab" ? s.items : [])),
-    );
 }
 
 export const totalMinutes = lessons.reduce((n, l) => n + l.minutes, 0);

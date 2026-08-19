@@ -25,7 +25,7 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "European Portuguese in sips — byte-sized lessons from A1 to B2, with quizzes and café conversations.",
+          "European Portuguese in sips — byte-sized lessons from A1 to C1, with quizzes and café conversations.",
       },
       { name: "apple-mobile-web-app-title", content: APP_NAME },
       { name: "theme-color", content: "#1E4D73" },

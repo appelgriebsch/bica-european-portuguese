@@ -420,4 +420,83 @@ export const readingPieces: ReadingPiece[] = [
       },
     ],
   },
+  {
+    id: "read-cronica-electrico",
+    level: "C1",
+    minutes: 15,
+    kind: "column",
+    source: "A Sunday crónica in a Lisbon paper",
+    title: "The tram that persists",
+    titlePt: "O eléctrico teima",
+    paragraphs: [
+      {
+        pt: "A cidade muda, dizem. Muda sempre. Há um pacote, há um ministro, há quem diga que já não há cidade. À primeira vista, parece o mesmo artigo de sempre. No fundo, ninguém se espanta.",
+        en: "The city is changing, they say. It always is. There is a package, a minister, people who say there is no city left. At first glance it looks like the same old piece. Deep down, nobody is surprised.",
+      },
+      {
+        pt: "Eu apanho o eléctrico na Graça. O mesmo sítio. O mesmo atraso, se calhar. O motorista conhece as caras e não as nomeia. Teima. É um verbo pouco elegante e, mesmo assim, o mais honesto.",
+        en: "I catch the tram in Graça. The same place. The same delay, probably. The driver knows the faces and does not name them. It persists. An inelegant verb, and still the most honest.",
+      },
+      {
+        pt: "Por um lado, o argumento pesa: os alugueres, o ruído, a fila para um café que já foi nossa. Por outro, a rua não deixou de ser a rua. Não deixa de ser. Há uma diferença pequena e teimosa entre as duas frases.",
+        en: "On the one hand the argument has weight: the rents, the noise, the queue for a café that used to be ours. On the other, the street has not stopped being the street. It remains so. There is a small, stubborn difference between those two sentences.",
+      },
+      {
+        pt: "Li ontem que o pacote entra em vigor na segunda, sem mais pormenores. Os pormenores, em Lisboa, chegam no eléctrico. Alguém diz “pois”. Alguém diz “pronto”. Ninguém resolve a cidade. Resolvem a paragem.",
+        en: "I read yesterday that the package comes into force on Monday, without further details. In Lisbon the details arrive on the tram. Someone says “right”. Someone says “alright”. Nobody solves the city. They solve the stop.",
+      },
+      {
+        pt: "É um lugar-comum, e mesmo assim é verdade: a cidade que dizem que mudou teima no mesmo sítio. Eu também. Desço na minha. O pão, se houver, ainda está quente.",
+        en: "It is a commonplace, and still true: the city they say has changed persists in the same place. So do I. I get off at mine. The bread, if there is any, is still warm.",
+      },
+    ],
+    notes: [
+      { pt: "teimar", en: "to persist — inelegant and honest" },
+      { pt: "não deixa de ser", en: "it remains / it is still" },
+      { pt: "sem mais pormenores", en: "without further details" },
+    ],
+    image: "/scenes/tram.jpg",
+    quiz: [
+      {
+        id: "q1",
+        kind: "choice",
+        prompt: "The writer’s honest verb for the tram is…",
+        options: ["voar", "teimar", "desaparecer", "traduzir"],
+        answer: 1,
+        explain: "Teima.",
+      },
+      {
+        id: "q2",
+        kind: "choice",
+        prompt: "“Não deixa de ser” here keeps…",
+        options: ["The street in the room", "A cancellation", "A sports result", "Silence only"],
+        answer: 0,
+        explain: "It remains the street.",
+      },
+      {
+        id: "q3",
+        kind: "type",
+        prompt: "Type 'deep down' as in the column.",
+        accept: ["no fundo"],
+        explain: "No fundo.",
+      },
+      {
+        id: "q4",
+        kind: "truefalse",
+        prompt: "The column claims the package will solve Lisbon.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Ninguém resolve a cidade. Resolvem a paragem.",
+      },
+      {
+        id: "q5",
+        kind: "listen",
+        prompt: "What is still warm?",
+        speak: "Desço na minha. O pão, se houver, ainda está quente.",
+        options: ["The metro", "The bread, if there is any", "The minister", "The sea"],
+        answer: 1,
+        explain: "O pão, se houver.",
+      },
+    ],
+  },
 ];
