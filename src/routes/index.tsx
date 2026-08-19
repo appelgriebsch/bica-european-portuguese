@@ -1,0 +1,157 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowRight, Clock3, Radio, Volume2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { AppShell } from "@/components/app-shell";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { firstIncomplete, lessons, levels } from "@/data/curriculum";
+import { warmVoices } from "@/lib/tts";
+import { useProgress } from "@/lib/progress-store";
+import { greetingForHour } from "@/lib/utils";
+
+export const Route = createFileRoute("/")({ component: Home });
+
+function Home() {
+  const completed = useProgress((s) => s.completed);
+  const xp = useProgress((s) => s.xp);
+  const streak = useProgress((s) => s.streak);
+  const [hour, setHour] = useState(9);
+
+  useEffect(() => {
+    setHour(new Date().getHours());
+    warmVoices();
+  }, []);
+
+  const greet = greetingForHour(hour);
+  const doneIds = useMemo(() => new Set(Object.keys(completed)), [completed]);
+  const next = firstIncomplete(doneIds);
+  const doneCount = doneIds.size;
+  const pct = Math.round((doneCount / lessons.length) * 100);
+  const todayDone = Object.values(completed).some((r) => {
+    const d = new Date(r.completedAt);
+    const now = new Date();
+    return (
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate()
+    );
+  });
+
+  return (
+    <AppShell>
+      <p className="text-sm font-medium tracking-wide text-accent">{greet.pt}</p>
+      <h1 className="mt-1 font-display text-3xl font-medium tracking-tight">
+        Portuguese in sips.
+      </h1>
+      <p className="mt-2 max-w-prose text-muted">
+        European Portuguese, under twenty minutes. Built for the gap between
+        meetings — then the café, the book, the radio.
+      </p>
+
+      <section className="mt-6 overflow-hidden rounded-[var(--radius-xl)] bg-surface shadow-[var(--shadow-border)]">
+        <img
+          src="/scenes/cafe.jpg"
+          alt="A Lisbon pastelaria counter with a small espresso"
+          className="scene h-44 w-full object-cover"
+        />
+        <div className="p-5">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted">
+            {todayDone ? "Done for today" : "Continue"} · {next.level} · {next.minutes} min
+          </p>
+          <h2 className="mt-1 font-display text-2xl font-medium">{next.titlePt}</h2>
+          <p className="mt-1 text-muted">{next.title}</p>
+          <p className="mt-2 text-sm text-muted">{next.summary}</p>
+          <Button asChild className="mt-4 w-full sm:w-auto">
+            <Link to="/lesson/$id" params={{ id: next.id }}>
+              {doneIds.has(next.id) ? "Revise" : "Start lesson"}
+              <ArrowRight />
+            </Link>
+          </Button>
+        </div>
+      </section>
+
+      <section className="mt-5 grid grid-cols-3 gap-2">
+        <Stat label="Streak" value={`${streak}`} hint="days" />
+        <Stat label="Lessons" value={`${doneCount}`} hint={`of ${lessons.length}`} />
+        <Stat label="XP" value={`${xp}`} hint="quiet points" />
+      </section>
+
+      <div className="mt-4">
+        <div className="mb-1.5 flex justify-between text-xs text-muted">
+          <span>Path</span>
+          <span className="tabular-nums">{pct}%</span>
+        </div>
+        <Progress value={pct} />
+      </div>
+
+      <section className="mt-8">
+        <h2 className="font-display text-xl font-medium">Levels</h2>
+        <ul className="mt-3 grid gap-3">
+          {levels.map((lv) => {
+            const inLevel = lessons.filter((l) => l.level === lv.id);
+            const done = inLevel.filter((l) => doneIds.has(l.id)).length;
+            return (
+              <li key={lv.id}>
+                <Link
+                  to="/path"
+                  className="flex items-start gap-4 rounded-[var(--radius-lg)] bg-surface p-4 no-underline shadow-[var(--shadow-border)] transition-shadow duration-[var(--motion-quick)] hover:shadow-[var(--shadow-border-hover)]"
+                >
+                  <span className="grid size-11 shrink-0 place-items-center rounded-[var(--radius-md)] bg-soft font-display text-sm font-semibold text-accent">
+                    {lv.id}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block font-medium text-fg">{lv.title}</span>
+                    <span className="mt-0.5 block text-sm text-muted">{lv.blurb}</span>
+                    <span className="mt-2 block text-xs tabular-nums text-subtle">
+                      {done}/{inLevel.length} lessons
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      <section className="mt-8 grid gap-3 sm:grid-cols-2">
+        <Link
+          to="/speak"
+          className="flex items-start gap-3 rounded-[var(--radius-lg)] bg-accent p-4 text-accent-fg no-underline"
+        >
+          <Volume2 className="mt-0.5 size-5 shrink-0" />
+          <span>
+            <span className="block font-medium">Speak</span>
+            <span className="mt-1 block text-sm text-accent-fg/80">
+              Café, tickets, disagreement — short scenes with a Lisbon partner.
+            </span>
+          </span>
+        </Link>
+        <div className="flex items-start gap-3 rounded-[var(--radius-lg)] bg-surface p-4 shadow-[var(--shadow-border)]">
+          <Radio className="mt-0.5 size-5 shrink-0 text-accent" />
+          <div>
+            <p className="font-medium">After B1</p>
+            <p className="mt-1 text-sm text-muted">
+              Leave Antena 1 or TSF on with the kettle. Do not rewind. Write three
+              words.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <p className="mt-8 flex items-center gap-2 text-sm text-subtle">
+        <Clock3 className="size-4" />
+        {lessons.length} lessons · none over 18 minutes
+      </p>
+    </AppShell>
+  );
+}
+
+function Stat({ label, value, hint }: { label: string; value: string; hint: string }) {
+  return (
+    <div className="rounded-[var(--radius-lg)] bg-surface px-3 py-3 shadow-[var(--shadow-border)]">
+      <p className="text-[0.7rem] font-medium uppercase tracking-wider text-muted">{label}</p>
+      <p className="mt-1 font-display text-2xl font-medium tabular-nums leading-none">{value}</p>
+      <p className="mt-1 text-xs text-subtle">{hint}</p>
+    </div>
+  );
+}

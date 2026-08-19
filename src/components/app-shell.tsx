@@ -1,0 +1,134 @@
+import { Link, useRouterState } from "@tanstack/react-router";
+import { BookOpen, House, MessageCircle, UserRound } from "lucide-react";
+import type { ReactNode } from "react";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useProgress } from "@/lib/progress-store";
+import { cn } from "@/lib/utils";
+import { ProgressSync } from "@/components/progress-sync";
+
+const nav = [
+  { to: "/", label: "Today", icon: House },
+  { to: "/path", label: "Path", icon: BookOpen },
+  { to: "/speak", label: "Speak", icon: MessageCircle },
+  { to: "/me", label: "You", icon: UserRound },
+] as const;
+
+export function AppShell({
+  children,
+  hideNav = false,
+}: {
+  children: ReactNode;
+  hideNav?: boolean;
+}) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const streak = useProgress((s) => s.streak);
+  const { user, isPending } = useCurrentUserState();
+
+  return (
+    <div className="min-h-dvh bg-bg text-fg">
+      <ProgressSync />
+      <header className="sticky top-0 z-30 border-b border-border/80 bg-bg/90 backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-2xl items-center justify-between gap-3 px-4">
+          <Link to="/" className="flex items-center gap-2 no-underline">
+            <span className="grid size-8 place-items-center rounded-[var(--radius-sm)] bg-accent font-display text-sm font-semibold text-accent-fg">
+              B
+            </span>
+            <span className="font-display text-lg font-medium tracking-tight">Bica</span>
+          </Link>
+          <div className="hidden items-center gap-1 md:flex">
+            {nav.map((item) => {
+              const active =
+                item.to === "/"
+                  ? pathname === "/"
+                  : pathname === item.to || pathname.startsWith(`${item.to}/`);
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={cn(
+                    "rounded-[var(--radius-sm)] px-3 py-2 text-sm font-medium no-underline transition-colors duration-[var(--motion-quick)]",
+                    active ? "bg-soft text-accent" : "text-muted hover:text-fg",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+          <div className="flex items-center gap-3">
+            {streak > 0 && (
+              <p className="text-xs font-medium tabular-nums text-muted">
+                {streak}d
+              </p>
+            )}
+            {isPending ? (
+              <div className="size-8 animate-pulse rounded-full bg-surface-2" />
+            ) : user ? (
+              <Link
+                to="/me"
+                title={user.displayName ?? "You"}
+                className="size-8 overflow-hidden rounded-full bg-surface-2"
+              >
+                {user.profileImageUrl ? (
+                  <img
+                    src={user.profileImageUrl}
+                    alt=""
+                    className="size-8 object-cover"
+                  />
+                ) : (
+                  <span className="grid size-8 place-items-center text-xs font-medium">
+                    {(user.displayName ?? "U").charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="text-sm font-medium text-accent no-underline hover:underline"
+              >
+                Sign in
+              </Link>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main
+        className={cn(
+          "mx-auto w-full max-w-2xl px-4 pt-5",
+          hideNav ? "pb-8" : "pb-28 md:pb-12",
+        )}
+      >
+        {children}
+      </main>
+
+      {!hideNav && (
+        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
+          <ul className="mx-auto grid max-w-2xl grid-cols-4">
+            {nav.map((item) => {
+              const active =
+                item.to === "/"
+                  ? pathname === "/"
+                  : pathname === item.to || pathname.startsWith(`${item.to}/`);
+              const Icon = item.icon;
+              return (
+                <li key={item.to}>
+                  <Link
+                    to={item.to}
+                    className={cn(
+                      "flex min-h-14 flex-col items-center justify-center gap-0.5 text-[0.7rem] font-medium no-underline",
+                      active ? "text-accent" : "text-muted",
+                    )}
+                  >
+                    <Icon className="size-5" strokeWidth={active ? 2.2 : 1.8} />
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      )}
+    </div>
+  );
+}

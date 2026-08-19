@@ -1,0 +1,52 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { GROK_PROVIDERS, authEnabled, signIn } from "@/lib/auth/client";
+import { Button } from "@/components/ui/button";
+
+export const Route = createFileRoute("/login")({ component: Login });
+
+function Login() {
+  return (
+    <main className="min-h-dvh bg-bg text-fg">
+      <div className="azulejo-band h-2 w-full" />
+      <div className="mx-auto grid min-h-[calc(100dvh-8px)] max-w-md content-center px-6 py-10">
+        <Link to="/" className="mb-8 font-display text-2xl font-medium text-fg no-underline">
+          Bica
+        </Link>
+        <h1 className="font-display text-3xl font-medium tracking-tight">
+          Keep your streak.
+        </h1>
+        <p className="mt-3 text-muted">
+          Sign in to save progress, sync across devices, and practise speaking
+          with a Lisbon conversation partner.
+        </p>
+        <div className="mt-8 space-y-3">
+          {authEnabled ? (
+            GROK_PROVIDERS.map((p) => (
+              <Button
+                key={p.providerId}
+                type="button"
+                variant="outline"
+                className="h-12 w-full"
+                onClick={() => signIn(p.providerId, { callbackURL: "/" })}
+              >
+                Continue with {p.label}
+              </Button>
+            ))
+          ) : (
+            <p className="text-sm text-muted">Sign-in is disabled.</p>
+          )}
+        </div>
+        <p className="mt-6 text-sm text-subtle">
+          Lessons work without an account. Progress stays on this device until
+          you sign in.
+        </p>
+        <Link
+          to="/"
+          className="mt-4 inline-block text-sm font-medium text-accent no-underline hover:underline"
+        >
+          Continue as guest
+        </Link>
+      </div>
+    </main>
+  );
+}
