@@ -23,7 +23,7 @@ export function LessonPlayer({ id }: { id: string }) {
       </div>
     );
   }
-  return <Player lesson={lesson} />;
+  return <Player key={lesson.id} lesson={lesson} />;
 }
 
 function Player({ lesson }: { lesson: Lesson }) {

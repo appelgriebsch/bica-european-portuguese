@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { SpeakButton } from "@/components/speak-button";
-import { estimatedLevel, lessons, vocabFromCompleted } from "@/data/curriculum";
+import { StartLevelPicker } from "@/components/start-level";
+import { lessons, vocabFromCompleted, workingLevel } from "@/data/curriculum";
 import { signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useProgress } from "@/lib/progress-store";
@@ -14,11 +15,12 @@ function MePage() {
   const completed = useProgress((s) => s.completed);
   const xp = useProgress((s) => s.xp);
   const streak = useProgress((s) => s.streak);
+  const floor = useProgress((s) => s.floor);
   const doneIds = Object.keys(completed);
   const doneSet = new Set(doneIds);
   const lessonDone = lessons.filter((l) => doneSet.has(l.id)).length;
   const vocab = vocabFromCompleted(doneIds).slice(0, 24);
-  const estimated = estimatedLevel(doneSet);
+  const estimated = workingLevel(doneSet, floor);
 
   return (
     <AppShell>
@@ -71,6 +73,13 @@ function MePage() {
       <p className="mt-2 text-sm text-subtle">
         {lessonDone} lessons on the path. Review lives under Practice.
       </p>
+
+      <section className="mt-8">
+        <StartLevelPicker label="Treat me as" />
+        <p className="mt-2 text-sm text-subtle">
+          Today will offer the next unfinished lesson from this level up.
+        </p>
+      </section>
 
       <section className="mt-8">
         <div className="flex items-end justify-between gap-3">

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { CefrLevel } from "@/data/types";
 import { todayKey, yesterdayKey } from "@/lib/utils";
 
 export type LessonResult = {
@@ -14,8 +15,10 @@ export type ProgressState = {
   xp: number;
   streak: number;
   lastStudyDate: string | null;
+  floor: CefrLevel;
   hydrated: boolean;
   markHydrated: () => void;
+  setFloor: (level: CefrLevel) => void;
   completeLesson: (lessonId: string, result: Omit<LessonResult, "completedAt">) => void;
   mergeRemote: (remote: {
     completed: Record<string, LessonResult>;
@@ -44,8 +47,10 @@ export const useProgress = create<ProgressState>()(
       xp: 0,
       streak: 0,
       lastStudyDate: null,
+      floor: "A1",
       hydrated: false,
       markHydrated: () => set({ hydrated: true }),
+      setFloor: (level) => set({ floor: level }),
       completeLesson: (lessonId, result) => {
         const today = todayKey();
         const prev = get();
@@ -104,6 +109,7 @@ export const useProgress = create<ProgressState>()(
         xp: s.xp,
         streak: s.streak,
         lastStudyDate: s.lastStudyDate,
+        floor: s.floor,
       }),
       onRehydrateStorage: () => () => {
         useProgress.getState().markHydrated();

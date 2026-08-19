@@ -120,8 +120,18 @@ export function nextLesson(id: string): Lesson | undefined {
   return lessons[i + 1];
 }
 
-export function firstIncomplete(completedIds: Set<string>): Lesson {
-  return lessons.find((l) => !completedIds.has(l.id)) ?? lessons[lessons.length - 1]!;
+export function firstIncomplete(completedIds: Set<string>, floor: CefrLevel = "A1"): Lesson {
+  const rank: Record<CefrLevel, number> = { A1: 0, A2: 1, B1: 2, B2: 3 };
+  const min = rank[floor];
+  const pool = lessons.filter((l) => rank[l.level] >= min);
+  return pool.find((l) => !completedIds.has(l.id)) ?? pool[pool.length - 1] ?? lessons[lessons.length - 1]!;
+}
+
+export function workingLevel(completedIds: Set<string>, floor: CefrLevel = "A1"): CefrLevel {
+  const rank: Record<CefrLevel, number> = { A1: 0, A2: 1, B1: 2, B2: 3 };
+  if (completedIds.size === 0) return floor;
+  const est = estimatedLevel(completedIds);
+  return rank[est] >= rank[floor] ? est : floor;
 }
 
 export function firstIncompleteOf<T extends { id: string; level: CefrLevel }>(

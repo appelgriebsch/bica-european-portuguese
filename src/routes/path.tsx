@@ -58,7 +58,9 @@ function PathPage() {
                           <span className="block truncate font-medium text-fg">
                             {lesson.titlePt}
                             <span className="ml-2 font-sans text-sm font-normal text-muted">
-                              {lesson.title.split("—")[0]?.trim()}
+                              {lesson.title.includes("—")
+                                ? lesson.title.split("—").slice(1).join("—").trim()
+                                : lesson.title}
                             </span>
                           </span>
                           <span className="mt-0.5 block text-xs text-subtle">

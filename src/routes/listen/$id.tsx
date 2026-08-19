@@ -25,7 +25,7 @@ function ListenPage() {
       </main>
     );
   }
-  return <ListenPlayer bulletin={bulletin} />;
+  return <ListenPlayer key={bulletin.id} bulletin={bulletin} />;
 }
 
 function ListenPlayer({ bulletin }: { bulletin: RadioBulletin }) {

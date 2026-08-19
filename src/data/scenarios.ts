@@ -44,6 +44,20 @@ export const speakScenarios: SpeakScenario[] = [
     image: "/scenes/tram.jpg",
   },
   {
+    id: "origem",
+    level: "A1",
+    minutes: 8,
+    title: "Where you're from",
+    titlePt: "De onde é?",
+    setting:
+      "A neighbour in the stairwell has heard you speak German on the phone. They ask where you are from, what you speak, and whether this is your first time in Lisbon. Keep it short.",
+    partner: "Dona Lurdes, next door",
+    openerPt: "Boa tarde. Desculpe, de onde é o senhor?",
+    openerEn: "Good afternoon. Excuse me — where are you from?",
+    goals: ["Say sou alemão / alemã", "Say vivo em…", "Say estou a aprender português"],
+    image: "/scenes/cafe.jpg",
+  },
+  {
     id: "planos",
     level: "A2",
     minutes: 10,
@@ -55,6 +69,20 @@ export const speakScenarios: SpeakScenario[] = [
     openerPt: "Olá! Então, vais ter tempo amanhã à noite?",
     openerEn: "Hi! So, will you have time tomorrow night?",
     goals: ["Propose a time with que tal", "Accept or suggest another", "Close with combinado"],
+    image: "/scenes/cafe.jpg",
+  },
+  {
+    id: "trabalho-chat",
+    level: "A2",
+    minutes: 8,
+    title: "What you do",
+    titlePt: "O trabalho",
+    setting:
+      "You are sharing a table at a tasca because the place is full. After the weather, they ask what you do. Answer in one sentence. Ask them back.",
+    partner: "Rui, across the paper tablecloth",
+    openerPt: "E então, o que faz? Se não é indiscrição.",
+    openerEn: "So, what do you do? If it's not too nosy.",
+    goals: ["Use trabalho em / com", "Say estou de férias if true", "Ask e o senhor?"],
     image: "/scenes/cafe.jpg",
   },
   {

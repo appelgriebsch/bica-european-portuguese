@@ -25,7 +25,7 @@ function ReadPage() {
       </main>
     );
   }
-  return <ReadPlayer piece={piece} />;
+  return <ReadPlayer key={piece.id} piece={piece} />;
 }
 
 function ReadPlayer({ piece }: { piece: ReadingPiece }) {

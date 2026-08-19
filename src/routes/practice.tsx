@@ -2,11 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { BookOpen, Check, Headphones, MessageCircle, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import {
-  estimatedLevel,
   firstIncompleteOf,
   radioBulletins,
   readingPieces,
   speakScenarios,
+  workingLevel,
 } from "@/data/curriculum";
 import { useProgress } from "@/lib/progress-store";
 import { cn } from "@/lib/utils";
@@ -15,8 +15,9 @@ export const Route = createFileRoute("/practice")({ component: PracticePage });
 
 function PracticePage() {
   const completed = useProgress((s) => s.completed);
+  const floor = useProgress((s) => s.floor);
   const doneIds = new Set(Object.keys(completed));
-  const level = estimatedLevel(doneIds);
+  const level = workingLevel(doneIds, floor);
   const nextRadio = firstIncompleteOf(radioBulletins, doneIds, level);
   const nextRead = firstIncompleteOf(readingPieces, doneIds, level);
   const radioDone = radioBulletins.filter((b) => doneIds.has(b.id)).length;

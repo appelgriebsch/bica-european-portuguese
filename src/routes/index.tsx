@@ -2,16 +2,17 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, BookOpen, Clock3, Headphones, MessageCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
+import { StartLevelPicker } from "@/components/start-level";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
-  estimatedLevel,
   firstIncomplete,
   firstIncompleteOf,
   lessons,
   levels,
   radioBulletins,
   readingPieces,
+  workingLevel,
 } from "@/data/curriculum";
 import { warmVoices } from "@/lib/tts";
 import { useProgress } from "@/lib/progress-store";
@@ -23,6 +24,7 @@ function Home() {
   const completed = useProgress((s) => s.completed);
   const xp = useProgress((s) => s.xp);
   const streak = useProgress((s) => s.streak);
+  const floor = useProgress((s) => s.floor);
   const [hour, setHour] = useState(9);
 
   useEffect(() => {
@@ -32,8 +34,8 @@ function Home() {
 
   const greet = greetingForHour(hour);
   const doneIds = useMemo(() => new Set(Object.keys(completed)), [completed]);
-  const next = firstIncomplete(doneIds);
-  const level = estimatedLevel(doneIds);
+  const next = firstIncomplete(doneIds, floor);
+  const level = workingLevel(doneIds, floor);
   const nextRadio = firstIncompleteOf(radioBulletins, doneIds, level);
   const nextRead = firstIncompleteOf(readingPieces, doneIds, level);
   const doneCount = lessons.filter((l) => doneIds.has(l.id)).length;
@@ -58,6 +60,16 @@ function Home() {
         European Portuguese, under twenty minutes. Built for the gap between
         meetings — then the café, the book, the radio.
       </p>
+
+      {doneCount === 0 && (
+        <section className="mt-6">
+          <StartLevelPicker label="I am starting at" />
+          <p className="mt-2 text-sm text-subtle">
+            Jump the early units if you already greet and order. The path stays
+            open.
+          </p>
+        </section>
+      )}
 
       <section className="mt-6 overflow-hidden rounded-[var(--radius-xl)] bg-surface shadow-[var(--shadow-border)]">
         <img

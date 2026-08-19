@@ -1,0 +1,1 @@
+import{o as e}from"./useStore-DCim0WvV.js";import{i as t}from"./index-Gxtlb2oT.js";import{n}from"./lesson-player--Ijqli7P.js";var r=e();function i(){let{id:e}=t.useParams();return(0,r.jsx)(n,{id:e})}export{i as component};
