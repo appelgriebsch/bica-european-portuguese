@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { SpeakButton } from "@/components/speak-button";
-import { lessons, levels } from "@/data/curriculum";
+import { estimatedLevel, lessons, vocabFromCompleted } from "@/data/curriculum";
 import { signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useProgress } from "@/lib/progress-store";
@@ -15,22 +15,10 @@ function MePage() {
   const xp = useProgress((s) => s.xp);
   const streak = useProgress((s) => s.streak);
   const doneIds = Object.keys(completed);
-  const vocab = lessons
-    .filter((l) => doneIds.includes(l.id))
-    .flatMap((l) =>
-      l.sections.flatMap((s) => (s.type === "vocab" ? s.items : [])),
-    )
-    .slice(0, 24);
-
-  const estimated =
-    levels
-      .slice()
-      .reverse()
-      .find((lv) => {
-        const inLevel = lessons.filter((l) => l.level === lv.id);
-        const done = inLevel.filter((l) => doneIds.includes(l.id)).length;
-        return done >= Math.ceil(inLevel.length * 0.5);
-      })?.id ?? "A1";
+  const doneSet = new Set(doneIds);
+  const lessonDone = lessons.filter((l) => doneSet.has(l.id)).length;
+  const vocab = vocabFromCompleted(doneIds).slice(0, 24);
+  const estimated = estimatedLevel(doneSet);
 
   return (
     <AppShell>
@@ -56,7 +44,8 @@ function MePage() {
           <div>
             <p className="font-medium">Learning as a guest</p>
             <p className="mt-1 text-sm text-muted">
-              Sign in to keep the streak if you switch phones.
+              Sign in to keep the streak if you switch phones, and to speak with
+              a live partner.
             </p>
             <Button asChild className="mt-4">
               <Link to="/login">Sign in</Link>
@@ -79,12 +68,24 @@ function MePage() {
           <p className="font-display text-2xl tabular-nums">{xp}</p>
         </div>
       </section>
+      <p className="mt-2 text-sm text-subtle">
+        {lessonDone} lessons on the path. Review lives under Practice.
+      </p>
 
       <section className="mt-8">
-        <h2 className="font-display text-xl font-medium">Phrasebook</h2>
-        <p className="mt-1 text-sm text-muted">
-          Words from lessons you have finished. Tap the speaker.
-        </p>
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <h2 className="font-display text-xl font-medium">Phrasebook</h2>
+            <p className="mt-1 text-sm text-muted">
+              Words from lessons you have finished. Tap the speaker.
+            </p>
+          </div>
+          {vocab.length > 0 && (
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/review">Review</Link>
+            </Button>
+          )}
+        </div>
         {vocab.length === 0 ? (
           <p className="mt-4 text-sm text-subtle">Finish a lesson to fill this page.</p>
         ) : (

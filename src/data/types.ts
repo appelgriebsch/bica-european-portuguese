@@ -12,11 +12,12 @@ export type VocabItem = {
 
 export type QuizQuestion = {
   id: string;
-  kind: "choice" | "truefalse" | "listen";
+  kind: "choice" | "truefalse" | "listen" | "type";
   prompt: string;
   speak?: string;
-  options: string[];
-  answer: number;
+  options?: string[];
+  answer?: number;
+  accept?: string[];
   explain: string;
 };
 
@@ -80,4 +81,32 @@ export type SpeakScenario = {
   openerEn: string;
   goals: string[];
   image: string;
+};
+
+export type RadioBulletin = {
+  id: string;
+  level: CefrLevel;
+  minutes: number;
+  station: string;
+  title: string;
+  titlePt: string;
+  kicker: string;
+  script: string;
+  translation: string;
+  image: string;
+  quiz: QuizQuestion[];
+};
+
+export type ReadingPiece = {
+  id: string;
+  level: CefrLevel;
+  minutes: number;
+  kind: "notice" | "message" | "news" | "page";
+  source: string;
+  title: string;
+  titlePt: string;
+  paragraphs: { pt: string; en: string }[];
+  notes: { pt: string; en: string }[];
+  image: string;
+  quiz: QuizQuestion[];
 };

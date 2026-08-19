@@ -1,15 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
+import { QuizBlock } from "@/components/quiz-block";
 import { SpeakButton } from "@/components/speak-button";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { getLesson, nextLesson } from "@/data/curriculum";
-import type { Lesson, LessonSection, QuizQuestion } from "@/data/types";
+import type { Lesson, LessonSection } from "@/data/types";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
-import { saveLessonProgress, saveProgressSnapshot } from "@/lib/progress-server";
-import { useProgress } from "@/lib/progress-store";
-import { speakPt } from "@/lib/tts";
+import { persistCompletion } from "@/lib/record-progress";
 import { cn } from "@/lib/utils";
 
 export function LessonPlayer({ id }: { id: string }) {
@@ -30,74 +29,27 @@ export function LessonPlayer({ id }: { id: string }) {
 function Player({ lesson }: { lesson: Lesson }) {
   const steps = useMemo(() => [...lesson.sections, { type: "quiz" as const }], [lesson]);
   const [step, setStep] = useState(0);
-  const [quizIndex, setQuizIndex] = useState(0);
-  const [picked, setPicked] = useState<number | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
-  const correctRef = useRef(0);
   const [done, setDone] = useState(false);
-  const completeLesson = useProgress((s) => s.completeLesson);
   const user = useCurrentUser();
 
   const totalSteps = steps.length;
   const current = steps[step];
-  const pct = done
-    ? 100
-    : Math.round(
-        ((step +
-          (current?.type === "quiz" ? quizIndex / Math.max(1, lesson.quiz.length) : 0)) /
-          totalSteps) *
-          100,
-      );
+  const pct = done ? 100 : Math.round((step / totalSteps) * 100);
 
   function goNext() {
     if (step < totalSteps - 1) setStep((s) => s + 1);
   }
 
   async function finishQuiz(finalCorrect: number) {
-    const xp = 8 + finalCorrect * 2;
     setCorrectCount(finalCorrect);
-    completeLesson(lesson.id, {
-      quizScore: finalCorrect,
-      quizTotal: lesson.quiz.length,
-      xp,
-    });
+    await persistCompletion(
+      lesson.id,
+      finalCorrect,
+      lesson.quiz.length,
+      Boolean(user),
+    );
     setDone(true);
-    if (user) {
-      try {
-        await saveLessonProgress({
-          data: {
-            lessonId: lesson.id,
-            quizScore: finalCorrect,
-            quizTotal: lesson.quiz.length,
-            xp,
-          },
-        });
-        await saveProgressSnapshot({ data: useProgress.getState().snapshot() });
-      } catch {
-        /* local copy still saved */
-      }
-    }
-  }
-
-  function onPick(q: QuizQuestion, index: number) {
-    if (picked !== null) return;
-    setPicked(index);
-    const ok = index === q.answer;
-    if (ok) {
-      correctRef.current += 1;
-      setCorrectCount(correctRef.current);
-    }
-  }
-
-  function onQuizContinue() {
-    if (picked === null) return;
-    const last = quizIndex >= lesson.quiz.length - 1;
-    if (last) {
-      void finishQuiz(correctRef.current);
-      return;
-    }
-    setQuizIndex((i) => i + 1);
-    setPicked(null);
   }
 
   const nxt = nextLesson(lesson.id);
@@ -123,21 +75,21 @@ function Player({ lesson }: { lesson: Lesson }) {
 
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-5">
         {done ? (
-          <DoneCard
-            lesson={lesson}
-            correct={correctCount}
-            total={lesson.quiz.length}
-            nextId={nxt?.id}
-          />
+          <DoneCard titlePt={lesson.titlePt} correct={correctCount} total={lesson.quiz.length}>
+            {nxt && (
+              <Button asChild>
+                <Link to="/lesson/$id" params={{ id: nxt.id }}>
+                  Next lesson
+                  <ArrowRight />
+                </Link>
+              </Button>
+            )}
+            <Button asChild variant="outline">
+              <Link to="/path">Path</Link>
+            </Button>
+          </DoneCard>
         ) : current?.type === "quiz" ? (
-          <QuizStep
-            question={lesson.quiz[quizIndex]!}
-            index={quizIndex}
-            total={lesson.quiz.length}
-            picked={picked}
-            onPick={onPick}
-            onContinue={onQuizContinue}
-          />
+          <QuizBlock questions={lesson.quiz} onFinished={(n) => void finishQuiz(n)} />
         ) : (
           <SectionView section={current as LessonSection} />
         )}
@@ -208,7 +160,7 @@ function SectionView({ section }: { section: LessonSection }) {
                     <span className="block text-subtle">{item.exampleEn}</span>
                   </p>
                 </div>
-                <SpeakButton text={item.pt} />
+                <SpeakButton text={item.examplePt || item.pt} />
               </div>
             </li>
           ))}
@@ -282,90 +234,18 @@ function SectionView({ section }: { section: LessonSection }) {
   );
 }
 
-function QuizStep({
-  question,
-  index,
-  total,
-  picked,
-  onPick,
-  onContinue,
-}: {
-  question: QuizQuestion;
-  index: number;
-  total: number;
-  picked: number | null;
-  onPick: (q: QuizQuestion, i: number) => void;
-  onContinue: () => void;
-}) {
-  const revealed = picked !== null;
-  const ok = picked === question.answer;
-
-  return (
-    <article>
-      <p className="text-xs font-medium uppercase tracking-wider text-accent">
-        Quiz · {index + 1} / {total}
-      </p>
-      <h2 className="mt-2 font-display text-2xl font-medium">{question.prompt}</h2>
-      {question.kind === "listen" && question.speak && (
-        <Button
-          type="button"
-          variant="outline"
-          className="mt-3"
-          onClick={() => speakPt(question.speak!)}
-        >
-          Play the line
-        </Button>
-      )}
-      <ul className="mt-5 space-y-2">
-        {question.options.map((opt, i) => {
-          const selected = picked === i;
-          const isAnswer = i === question.answer;
-          return (
-            <li key={opt}>
-              <button
-                type="button"
-                onClick={() => onPick(question, i)}
-                className={cn(
-                  "flex min-h-12 w-full items-center rounded-[var(--radius-md)] px-4 py-3 text-left text-sm font-medium shadow-[var(--shadow-border)] transition-colors duration-[var(--motion-quick)]",
-                  !revealed && "bg-surface hover:bg-surface-2",
-                  revealed && isAnswer && "bg-success text-success-fg",
-                  revealed && selected && !isAnswer && "bg-danger text-danger-fg",
-                  revealed && !selected && !isAnswer && "bg-surface text-muted",
-                )}
-              >
-                {opt}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-      {revealed && (
-        <div className="mt-4">
-          <p className={cn("text-sm font-medium", ok ? "text-success" : "text-danger")}>
-            {ok ? "That's it." : "Not quite."}
-          </p>
-          <p className="mt-1 text-sm text-muted">{question.explain}</p>
-          <Button className="mt-4 w-full" onClick={onContinue}>
-            {index === total - 1 ? "See results" : "Next"}
-          </Button>
-        </div>
-      )}
-    </article>
-  );
-}
-
-function DoneCard({
-  lesson,
+export function DoneCard({
+  titlePt,
   correct,
   total,
-  nextId,
+  children,
 }: {
-  lesson: Lesson;
+  titlePt: string;
   correct: number;
   total: number;
-  nextId?: string;
+  children?: ReactNode;
 }) {
-  const pass = correct / total >= 0.6;
+  const pass = total > 0 && correct / total >= 0.6;
   return (
     <article className="flex flex-1 flex-col">
       <div className="grid size-14 place-items-center rounded-full bg-success text-success-fg">
@@ -375,23 +255,13 @@ function DoneCard({
         {pass ? "Boa." : "Keep the cup warm."}
       </h1>
       <p className="mt-2 text-muted">
-        {lesson.titlePt} · {correct}/{total} on the quiz.
+        {titlePt} · {correct}/{total} on the quiz.
         {pass
           ? " That's a solid sip. Come back tomorrow."
-          : " Redo the quiz whenever you like — the lesson stays open."}
+          : " Redo whenever you like — it stays open."}
       </p>
       <div className="mt-8 flex flex-col gap-2 sm:flex-row">
-        {nextId && (
-          <Button asChild>
-            <Link to="/lesson/$id" params={{ id: nextId }}>
-              Next lesson
-              <ArrowRight />
-            </Link>
-          </Button>
-        )}
-        <Button asChild variant="outline">
-          <Link to="/path">Path</Link>
-        </Button>
+        {children}
         <Button asChild variant="ghost">
           <Link to="/">Today</Link>
         </Button>

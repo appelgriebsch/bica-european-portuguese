@@ -146,12 +146,32 @@ var Clock3 = createLucideIcon("clock-3", [["circle", {
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
+var Headphones = createLucideIcon("headphones", [["path", {
+	d: "M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3",
+	key: "1xhozi"
+}]]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
 var House = createLucideIcon("house", [["path", {
 	d: "M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8",
 	key: "5wwlr5"
 }], ["path", {
 	d: "M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
 	key: "1d0kgt"
+}]]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var LoaderCircle = createLucideIcon("loader-circle", [["path", {
+	d: "M21 12a9 9 0 1 1-6.219-8.56",
+	key: "13zald"
 }]]);
 /**
 * @license lucide-react v0.510.0 - ISC
@@ -169,30 +189,44 @@ var MessageCircle = createLucideIcon("message-circle", [["path", {
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
-var Radio = createLucideIcon("radio", [
-	["path", {
-		d: "M4.9 19.1C1 15.2 1 8.8 4.9 4.9",
-		key: "1vaf9d"
-	}],
-	["path", {
-		d: "M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5",
-		key: "u1ii0m"
-	}],
-	["circle", {
-		cx: "12",
-		cy: "12",
-		r: "2",
-		key: "1c9p78"
-	}],
-	["path", {
-		d: "M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5",
-		key: "1j5fej"
-	}],
-	["path", {
-		d: "M19.1 4.9C23 8.8 23 15.1 19.1 19",
-		key: "10b0cb"
-	}]
-]);
+var Pause = createLucideIcon("pause", [["rect", {
+	x: "14",
+	y: "4",
+	width: "4",
+	height: "16",
+	rx: "1",
+	key: "zuxfzm"
+}], ["rect", {
+	x: "6",
+	y: "4",
+	width: "4",
+	height: "16",
+	rx: "1",
+	key: "1okwgv"
+}]]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var Play = createLucideIcon("play", [["polygon", {
+	points: "6 3 20 12 6 21 6 3",
+	key: "1oa8hb"
+}]]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var RotateCcw = createLucideIcon("rotate-ccw", [["path", {
+	d: "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8",
+	key: "1357e3"
+}], ["path", {
+	d: "M3 3v5h5",
+	key: "1xhq8a"
+}]]);
 /**
 * @license lucide-react v0.510.0 - ISC
 *
@@ -262,4 +296,4 @@ var Volume2 = createLucideIcon("volume-2", [
 	}]
 ]);
 //#endregion
-export { Radio as a, Clock3 as c, ArrowRight as d, ArrowLeft as f, Send as i, Check as l, UserRound as n, MessageCircle as o, TriangleAlert as r, House as s, Volume2 as t, BookOpen as u };
+export { RotateCcw as a, MessageCircle as c, Headphones as d, Clock3 as f, ArrowLeft as g, ArrowRight as h, Send as i, LoaderCircle as l, BookOpen as m, UserRound as n, Play as o, Check as p, TriangleAlert as r, Pause as s, Volume2 as t, House as u };

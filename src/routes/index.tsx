@@ -1,10 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Clock3, Radio, Volume2 } from "lucide-react";
+import { ArrowRight, BookOpen, Clock3, Headphones, MessageCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { firstIncomplete, lessons, levels } from "@/data/curriculum";
+import {
+  estimatedLevel,
+  firstIncomplete,
+  firstIncompleteOf,
+  lessons,
+  levels,
+  radioBulletins,
+  readingPieces,
+} from "@/data/curriculum";
 import { warmVoices } from "@/lib/tts";
 import { useProgress } from "@/lib/progress-store";
 import { greetingForHour } from "@/lib/utils";
@@ -25,7 +33,10 @@ function Home() {
   const greet = greetingForHour(hour);
   const doneIds = useMemo(() => new Set(Object.keys(completed)), [completed]);
   const next = firstIncomplete(doneIds);
-  const doneCount = doneIds.size;
+  const level = estimatedLevel(doneIds);
+  const nextRadio = firstIncompleteOf(radioBulletins, doneIds, level);
+  const nextRead = firstIncompleteOf(readingPieces, doneIds, level);
+  const doneCount = lessons.filter((l) => doneIds.has(l.id)).length;
   const pct = Math.round((doneCount / lessons.length) * 100);
   const todayDone = Object.values(completed).some((r) => {
     const d = new Date(r.completedAt);
@@ -50,13 +61,14 @@ function Home() {
 
       <section className="mt-6 overflow-hidden rounded-[var(--radius-xl)] bg-surface shadow-[var(--shadow-border)]">
         <img
-          src="/scenes/cafe.jpg"
-          alt="A Lisbon pastelaria counter with a small espresso"
+          src={next.image}
+          alt=""
           className="scene h-44 w-full object-cover"
         />
         <div className="p-5">
           <p className="text-xs font-medium uppercase tracking-wider text-muted">
-            {todayDone ? "Done for today" : "Continue"} · {next.level} · {next.minutes} min
+            {todayDone ? "Done for today — or one more" : "Continue"} · {next.level} ·{" "}
+            {next.minutes} min
           </p>
           <h2 className="mt-1 font-display text-2xl font-medium">{next.titlePt}</h2>
           <p className="mt-1 text-muted">{next.title}</p>
@@ -83,6 +95,43 @@ function Home() {
         </div>
         <Progress value={pct} />
       </div>
+
+      <section className="mt-8 grid gap-3 sm:grid-cols-3">
+        <Link
+          to="/listen/$id"
+          params={{ id: nextRadio.id }}
+          className="flex items-start gap-3 rounded-[var(--radius-lg)] bg-accent p-4 text-accent-fg no-underline"
+        >
+          <Headphones className="mt-0.5 size-5 shrink-0" />
+          <span>
+            <span className="block font-medium">Listen</span>
+            <span className="mt-1 block text-sm text-accent-fg/80">
+              {nextRadio.station} · {nextRadio.titlePt}
+            </span>
+          </span>
+        </Link>
+        <Link
+          to="/read/$id"
+          params={{ id: nextRead.id }}
+          className="flex items-start gap-3 rounded-[var(--radius-lg)] bg-surface p-4 no-underline shadow-[var(--shadow-border)]"
+        >
+          <BookOpen className="mt-0.5 size-5 shrink-0 text-accent" />
+          <span>
+            <span className="block font-medium text-fg">Read</span>
+            <span className="mt-1 block text-sm text-muted">{nextRead.titlePt}</span>
+          </span>
+        </Link>
+        <Link
+          to="/speak"
+          className="flex items-start gap-3 rounded-[var(--radius-lg)] bg-surface p-4 no-underline shadow-[var(--shadow-border)]"
+        >
+          <MessageCircle className="mt-0.5 size-5 shrink-0 text-accent" />
+          <span>
+            <span className="block font-medium text-fg">Speak</span>
+            <span className="mt-1 block text-sm text-muted">A short scene</span>
+          </span>
+        </Link>
+      </section>
 
       <section className="mt-8">
         <h2 className="font-display text-xl font-medium">Levels</h2>
@@ -113,34 +162,9 @@ function Home() {
         </ul>
       </section>
 
-      <section className="mt-8 grid gap-3 sm:grid-cols-2">
-        <Link
-          to="/speak"
-          className="flex items-start gap-3 rounded-[var(--radius-lg)] bg-accent p-4 text-accent-fg no-underline"
-        >
-          <Volume2 className="mt-0.5 size-5 shrink-0" />
-          <span>
-            <span className="block font-medium">Speak</span>
-            <span className="mt-1 block text-sm text-accent-fg/80">
-              Café, tickets, disagreement — short scenes with a Lisbon partner.
-            </span>
-          </span>
-        </Link>
-        <div className="flex items-start gap-3 rounded-[var(--radius-lg)] bg-surface p-4 shadow-[var(--shadow-border)]">
-          <Radio className="mt-0.5 size-5 shrink-0 text-accent" />
-          <div>
-            <p className="font-medium">After B1</p>
-            <p className="mt-1 text-sm text-muted">
-              Leave Antena 1 or TSF on with the kettle. Do not rewind. Write three
-              words.
-            </p>
-          </div>
-        </div>
-      </section>
-
       <p className="mt-8 flex items-center gap-2 text-sm text-subtle">
         <Clock3 className="size-4" />
-        {lessons.length} lessons · none over 18 minutes
+        {lessons.length} lessons · none over 18 minutes · radio and pages on Practice
       </p>
     </AppShell>
   );
@@ -149,7 +173,7 @@ function Home() {
 function Stat({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
     <div className="rounded-[var(--radius-lg)] bg-surface px-3 py-3 shadow-[var(--shadow-border)]">
-      <p className="text-[0.7rem] font-medium uppercase tracking-wider text-muted">{label}</p>
+      <p className="text-xs font-medium uppercase tracking-wider text-muted">{label}</p>
       <p className="mt-1 font-display text-2xl font-medium tabular-nums leading-none">{value}</p>
       <p className="mt-1 text-xs text-subtle">{hint}</p>
     </div>

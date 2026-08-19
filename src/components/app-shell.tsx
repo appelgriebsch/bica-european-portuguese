@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BookOpen, House, MessageCircle, UserRound } from "lucide-react";
+import { BookOpen, Headphones, House, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useProgress } from "@/lib/progress-store";
@@ -7,10 +7,20 @@ import { cn } from "@/lib/utils";
 import { ProgressSync } from "@/components/progress-sync";
 
 const nav = [
-  { to: "/", label: "Today", icon: House },
-  { to: "/path", label: "Path", icon: BookOpen },
-  { to: "/speak", label: "Speak", icon: MessageCircle },
-  { to: "/me", label: "You", icon: UserRound },
+  { to: "/", label: "Today", icon: House, match: (p: string) => p === "/" },
+  { to: "/path", label: "Path", icon: BookOpen, match: (p: string) => p === "/path" || p.startsWith("/lesson") },
+  {
+    to: "/practice",
+    label: "Practice",
+    icon: Headphones,
+    match: (p: string) =>
+      p === "/practice" ||
+      p.startsWith("/speak") ||
+      p.startsWith("/listen") ||
+      p.startsWith("/read") ||
+      p.startsWith("/review"),
+  },
+  { to: "/me", label: "You", icon: UserRound, match: (p: string) => p === "/me" || p === "/login" },
 ] as const;
 
 export function AppShell({
@@ -37,10 +47,7 @@ export function AppShell({
           </Link>
           <div className="hidden items-center gap-1 md:flex">
             {nav.map((item) => {
-              const active =
-                item.to === "/"
-                  ? pathname === "/"
-                  : pathname === item.to || pathname.startsWith(`${item.to}/`);
+              const active = item.match(pathname);
               return (
                 <Link
                   key={item.to}
@@ -57,9 +64,7 @@ export function AppShell({
           </div>
           <div className="flex items-center gap-3">
             {streak > 0 && (
-              <p className="text-xs font-medium tabular-nums text-muted">
-                {streak}d
-              </p>
+              <p className="text-xs font-medium tabular-nums text-muted">{streak}d</p>
             )}
             {isPending ? (
               <div className="size-8 animate-pulse rounded-full bg-surface-2" />
@@ -106,17 +111,14 @@ export function AppShell({
         <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
           <ul className="mx-auto grid max-w-2xl grid-cols-4">
             {nav.map((item) => {
-              const active =
-                item.to === "/"
-                  ? pathname === "/"
-                  : pathname === item.to || pathname.startsWith(`${item.to}/`);
+              const active = item.match(pathname);
               const Icon = item.icon;
               return (
                 <li key={item.to}>
                   <Link
                     to={item.to}
                     className={cn(
-                      "flex min-h-14 flex-col items-center justify-center gap-0.5 text-[0.7rem] font-medium no-underline",
+                      "flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-medium no-underline",
                       active ? "text-accent" : "text-muted",
                     )}
                   >

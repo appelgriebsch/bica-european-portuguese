@@ -15,7 +15,8 @@ function PathPage() {
       <h1 className="font-display text-3xl font-medium tracking-tight">The path</h1>
       <p className="mt-2 text-muted">
         A1 through B2, in European Portuguese. Jump in anywhere — adults skip
-        what they already know.
+        what they already know. After B2 the work is the radio, the book, and
+        the queue.
       </p>
 
       <div className="mt-8 space-y-10">

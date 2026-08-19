@@ -23,3 +23,21 @@ export function yesterdayKey(d = new Date()): string {
   y.setDate(y.getDate() - 1);
   return todayKey(y);
 }
+
+/** Lowercase, collapse space, strip combining marks — kind to typed answers. */
+export function normalizePt(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/[“”"'`]/g, "")
+    .replace(/[.,!?…:;]/g, "");
+}
+
+export function answersMatch(input: string, accepted: string[]): boolean {
+  const got = normalizePt(input);
+  if (!got) return false;
+  return accepted.some((a) => normalizePt(a) === got);
+}

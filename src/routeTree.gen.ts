@@ -13,8 +13,12 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MeRouteImport } from './routes/me'
 import { Route as PathRouteImport } from './routes/path'
+import { Route as PracticeRouteImport } from './routes/practice'
+import { Route as ReviewRouteImport } from './routes/review'
 import { Route as SpeakRouteImport } from './routes/speak'
 import { Route as LessonIdRouteImport } from './routes/lesson/$id'
+import { Route as ListenIdRouteImport } from './routes/listen/$id'
+import { Route as ReadIdRouteImport } from './routes/read/$id'
 import { Route as SpeakIndexRouteImport } from './routes/speak/index'
 import { Route as SpeakIdRouteImport } from './routes/speak/$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -39,6 +43,16 @@ const PathRoute = PathRouteImport.update({
   path: '/path',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PracticeRoute = PracticeRouteImport.update({
+  id: '/practice',
+  path: '/practice',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReviewRoute = ReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SpeakRoute = SpeakRouteImport.update({
   id: '/speak',
   path: '/speak',
@@ -47,6 +61,16 @@ const SpeakRoute = SpeakRouteImport.update({
 const LessonIdRoute = LessonIdRouteImport.update({
   id: '/lesson/$id',
   path: '/lesson/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListenIdRoute = ListenIdRouteImport.update({
+  id: '/listen/$id',
+  path: '/listen/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReadIdRoute = ReadIdRouteImport.update({
+  id: '/read/$id',
+  path: '/read/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SpeakIndexRoute = SpeakIndexRouteImport.update({
@@ -70,8 +94,12 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/me': typeof MeRoute
   '/path': typeof PathRoute
+  '/practice': typeof PracticeRoute
+  '/review': typeof ReviewRoute
   '/speak': typeof SpeakRouteWithChildren
   '/lesson/$id': typeof LessonIdRoute
+  '/listen/$id': typeof ListenIdRoute
+  '/read/$id': typeof ReadIdRoute
   '/speak/$id': typeof SpeakIdRoute
   '/speak/': typeof SpeakIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -81,7 +109,11 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/me': typeof MeRoute
   '/path': typeof PathRoute
+  '/practice': typeof PracticeRoute
+  '/review': typeof ReviewRoute
   '/lesson/$id': typeof LessonIdRoute
+  '/listen/$id': typeof ListenIdRoute
+  '/read/$id': typeof ReadIdRoute
   '/speak/$id': typeof SpeakIdRoute
   '/speak': typeof SpeakIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -92,8 +124,12 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/me': typeof MeRoute
   '/path': typeof PathRoute
+  '/practice': typeof PracticeRoute
+  '/review': typeof ReviewRoute
   '/speak': typeof SpeakRouteWithChildren
   '/lesson/$id': typeof LessonIdRoute
+  '/listen/$id': typeof ListenIdRoute
+  '/read/$id': typeof ReadIdRoute
   '/speak/$id': typeof SpeakIdRoute
   '/speak/': typeof SpeakIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -105,8 +141,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/me'
     | '/path'
+    | '/practice'
+    | '/review'
     | '/speak'
     | '/lesson/$id'
+    | '/listen/$id'
+    | '/read/$id'
     | '/speak/$id'
     | '/speak/'
     | '/api/auth/$'
@@ -116,7 +156,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/me'
     | '/path'
+    | '/practice'
+    | '/review'
     | '/lesson/$id'
+    | '/listen/$id'
+    | '/read/$id'
     | '/speak/$id'
     | '/speak'
     | '/api/auth/$'
@@ -126,8 +170,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/me'
     | '/path'
+    | '/practice'
+    | '/review'
     | '/speak'
     | '/lesson/$id'
+    | '/listen/$id'
+    | '/read/$id'
     | '/speak/$id'
     | '/speak/'
     | '/api/auth/$'
@@ -138,8 +186,12 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MeRoute: typeof MeRoute
   PathRoute: typeof PathRoute
+  PracticeRoute: typeof PracticeRoute
+  ReviewRoute: typeof ReviewRoute
   SpeakRoute: typeof SpeakRouteWithChildren
   LessonIdRoute: typeof LessonIdRoute
+  ListenIdRoute: typeof ListenIdRoute
+  ReadIdRoute: typeof ReadIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -173,6 +225,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PathRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/practice': {
+      id: '/practice'
+      path: '/practice'
+      fullPath: '/practice'
+      preLoaderRoute: typeof PracticeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/review': {
+      id: '/review'
+      path: '/review'
+      fullPath: '/review'
+      preLoaderRoute: typeof ReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/speak': {
       id: '/speak'
       path: '/speak'
@@ -185,6 +251,20 @@ declare module '@tanstack/react-router' {
       path: '/lesson/$id'
       fullPath: '/lesson/$id'
       preLoaderRoute: typeof LessonIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/listen/$id': {
+      id: '/listen/$id'
+      path: '/listen/$id'
+      fullPath: '/listen/$id'
+      preLoaderRoute: typeof ListenIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/read/$id': {
+      id: '/read/$id'
+      path: '/read/$id'
+      fullPath: '/read/$id'
+      preLoaderRoute: typeof ReadIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/speak/': {
@@ -228,8 +308,12 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MeRoute: MeRoute,
   PathRoute: PathRoute,
+  PracticeRoute: PracticeRoute,
+  ReviewRoute: ReviewRoute,
   SpeakRoute: SpeakRouteWithChildren,
   LessonIdRoute: LessonIdRoute,
+  ListenIdRoute: ListenIdRoute,
+  ReadIdRoute: ReadIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

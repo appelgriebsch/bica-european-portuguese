@@ -14,7 +14,7 @@ function SpeakIndex() {
       <h1 className="font-display text-3xl font-medium tracking-tight">Speak</h1>
       <p className="mt-2 text-muted">
         Short scenes with a native of Portugal — not Brazil. Stay in character.
-        Make mistakes. Recasts come for free.
+        Make mistakes. Recasts come for free. Sign in first; the partner is live.
       </p>
 
       {!isPending && !user && (

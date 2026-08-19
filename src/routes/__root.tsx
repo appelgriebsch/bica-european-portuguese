@@ -71,12 +71,7 @@ export const Route = createRootRoute({
         <Toaster
           position="top-center"
           toastOptions={{
-            className: "font-sans",
-            style: {
-              background: "#fffbf5",
-              color: "#1a1714",
-              border: "1px solid #ddd4c6",
-            },
+            className: "font-sans bg-surface text-fg border-border",
           }}
         />
         <Scripts />
