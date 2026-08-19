@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, BookOpen, Clock3, Headphones, MessageCircle } from "lucide-react";
+import { ArrowRight, BookOpen, Clock3, Headphones, MessageCircle, PenLine } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { StartLevelPicker } from "@/components/start-level";
@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   firstIncomplete,
   firstIncompleteOf,
+  grammarDrills,
   lessons,
   levels,
   radioBulletins,
@@ -38,6 +39,7 @@ function Home() {
   const level = workingLevel(doneIds, floor);
   const nextRadio = firstIncompleteOf(radioBulletins, doneIds, level);
   const nextRead = firstIncompleteOf(readingPieces, doneIds, level);
+  const nextGram = firstIncompleteOf(grammarDrills, doneIds, level);
   const doneCount = lessons.filter((l) => doneIds.has(l.id)).length;
   const pct = Math.round((doneCount / lessons.length) * 100);
   const todayDone = Object.values(completed).some((r) => {
@@ -108,7 +110,7 @@ function Home() {
         <Progress value={pct} />
       </div>
 
-      <section className="mt-8 grid gap-3 sm:grid-cols-3">
+      <section className="mt-8 grid gap-3 sm:grid-cols-2">
         <Link
           to="/listen/$id"
           params={{ id: nextRadio.id }}
@@ -143,6 +145,18 @@ function Home() {
             <span className="mt-1 block text-sm text-muted">A short scene</span>
           </span>
         </Link>
+        <Link
+          to="/grammar"
+          className="flex items-start gap-3 rounded-[var(--radius-lg)] bg-surface p-4 no-underline shadow-[var(--shadow-border)]"
+        >
+          <PenLine className="mt-0.5 size-5 shrink-0 text-accent" />
+          <span>
+            <span className="block font-medium text-fg">Grammar</span>
+            <span className="mt-1 block text-sm text-muted">
+              {nextGram.level} · {nextGram.titlePt}
+            </span>
+          </span>
+        </Link>
       </section>
 
       <section className="mt-8">
@@ -151,6 +165,8 @@ function Home() {
           {levels.map((lv) => {
             const inLevel = lessons.filter((l) => l.level === lv.id);
             const done = inLevel.filter((l) => doneIds.has(l.id)).length;
+            const grams = grammarDrills.filter((d) => d.level === lv.id);
+            const gDone = grams.filter((d) => doneIds.has(d.id)).length;
             return (
               <li key={lv.id}>
                 <Link
@@ -164,7 +180,8 @@ function Home() {
                     <span className="block font-medium text-fg">{lv.title}</span>
                     <span className="mt-0.5 block text-sm text-muted">{lv.blurb}</span>
                     <span className="mt-2 block text-xs tabular-nums text-subtle">
-                      {done}/{inLevel.length} lessons
+                      {done}/{inLevel.length} lessons · {gDone}/{grams.length}{" "}
+                      grammar
                     </span>
                   </span>
                 </Link>
@@ -176,7 +193,8 @@ function Home() {
 
       <p className="mt-8 flex items-center gap-2 text-sm text-subtle">
         <Clock3 className="size-4" />
-        {lessons.length} lessons · none over 18 minutes · radio and pages on Practice
+        {lessons.length} lessons · {grammarDrills.length} grammar drills · none
+        over 18 minutes
       </p>
     </AppShell>
   );

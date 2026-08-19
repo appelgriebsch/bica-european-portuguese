@@ -61,6 +61,7 @@
     background: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-sans);
+    overflow-x: clip;
   }
 
   body {

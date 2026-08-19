@@ -110,3 +110,15 @@ export type ReadingPiece = {
   image: string;
   quiz: QuizQuestion[];
 };
+
+export type GrammarDrill = {
+  id: string;
+  level: CefrLevel;
+  minutes: number;
+  title: string;
+  titlePt: string;
+  focus: string;
+  body: string;
+  examples: { pt: string; en: string }[];
+  quiz: QuizQuestion[];
+};

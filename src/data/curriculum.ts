@@ -2,10 +2,18 @@ import { a1Lessons } from "./a1";
 import { a2Lessons } from "./a2";
 import { b1Lessons } from "./b1";
 import { b2Lessons } from "./b2";
+import { grammarDrills } from "./grammar";
 import { radioBulletins } from "./radio";
 import { readingPieces } from "./reading";
 import { speakScenarios } from "./scenarios";
-import type { CefrLevel, Lesson, RadioBulletin, ReadingPiece, Unit } from "./types";
+import type {
+  CefrLevel,
+  GrammarDrill,
+  Lesson,
+  RadioBulletin,
+  ReadingPiece,
+  Unit,
+} from "./types";
 
 export const levels: { id: CefrLevel; title: string; blurb: string }[] = [
   {
@@ -96,7 +104,7 @@ export const lessons: Lesson[] = [
   ...b2Lessons,
 ];
 
-export { speakScenarios, radioBulletins, readingPieces };
+export { speakScenarios, radioBulletins, readingPieces, grammarDrills };
 
 export function getLesson(id: string): Lesson | undefined {
   return lessons.find((l) => l.id === id);
@@ -108,6 +116,14 @@ export function getBulletin(id: string): RadioBulletin | undefined {
 
 export function getReading(id: string): ReadingPiece | undefined {
   return readingPieces.find((p) => p.id === id);
+}
+
+export function getGrammar(id: string): GrammarDrill | undefined {
+  return grammarDrills.find((d) => d.id === id);
+}
+
+export function grammarForLevel(level: CefrLevel): GrammarDrill[] {
+  return grammarDrills.filter((d) => d.level === level);
 }
 
 export function lessonsForLevel(level: CefrLevel): Lesson[] {

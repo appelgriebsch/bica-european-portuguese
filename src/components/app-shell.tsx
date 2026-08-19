@@ -18,7 +18,8 @@ const nav = [
       p.startsWith("/speak") ||
       p.startsWith("/listen") ||
       p.startsWith("/read") ||
-      p.startsWith("/review"),
+      p.startsWith("/review") ||
+      p.startsWith("/grammar"),
   },
   { to: "/me", label: "You", icon: UserRound, match: (p: string) => p === "/me" || p === "/login" },
 ] as const;
@@ -35,7 +36,7 @@ export function AppShell({
   const { user, isPending } = useCurrentUserState();
 
   return (
-    <div className="min-h-dvh bg-bg text-fg">
+    <div className="min-h-dvh overflow-x-clip bg-bg text-fg">
       <ProgressSync />
       <header className="sticky top-0 z-30 border-b border-border/80 bg-bg/90 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-2xl items-center justify-between gap-3 px-4">
