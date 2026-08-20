@@ -62,7 +62,7 @@ export const units: Unit[] = [
     level: "A1",
     title: "First words",
     titlePt: "Primeiras palavras",
-    blurb: "Hello, names, numbers, people.",
+    blurb: "Hello, names, numbers, first and second.",
     image: "/scenes/cafe.jpg",
   },
   {
