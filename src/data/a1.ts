@@ -215,7 +215,7 @@ export const a1Lessons: Lesson[] = [
     unitId: "a1-first",
     unit: "First words",
     order: 4,
-    minutes: 12,
+    minutes: 14,
     title: "Números — prices at the counter",
     titlePt: "Números",
     skill: "listen",
@@ -225,7 +225,7 @@ export const a1Lessons: Lesson[] = [
     sections: [
       {
         type: "intro",
-        kicker: "A1 · 12 min",
+        kicker: "A1 · 14 min",
         title: "The number is the sentence",
         body: "At a counter the Portuguese will say the price once, fast, and look at you. Training your ear for dois euros e cinquenta is the difference between nodding and holding up the card in panic.",
         phrase: { pt: "Quanto custa?", en: "How much is it?" },
@@ -235,7 +235,16 @@ export const a1Lessons: Lesson[] = [
         items: [
           { pt: "zero, um, dois, três, quatro", hint: "um ≈ oong (nasal)", en: "0–4", examplePt: "Um café, se faz favor.", exampleEn: "One coffee, please." },
           { pt: "cinco, seis, sete, oito, nove, dez", hint: "saysh, SET-te, OY-too", en: "5–10", examplePt: "Cinco pastéis.", exampleEn: "Five pastries." },
-          { pt: "onze … vinte", hint: "ON-ze … VEEN-te", en: "11–20", examplePt: "São quinze euros.", exampleEn: "That's fifteen euros." },
+          { pt: "onze", hint: "ON-ze", en: "eleven", examplePt: "Onze euros.", exampleEn: "Eleven euros." },
+          { pt: "doze", hint: "DO-ze", en: "twelve", examplePt: "São doze.", exampleEn: "It's twelve." },
+          { pt: "treze", hint: "TRE-ze", en: "thirteen", examplePt: "Treze pastéis.", exampleEn: "Thirteen pastries." },
+          { pt: "catorze", hint: "ka-TOR-ze", en: "fourteen", examplePt: "Catorze euros.", exampleEn: "Fourteen euros." },
+          { pt: "quinze", hint: "KEEN-ze", en: "fifteen", examplePt: "São quinze euros.", exampleEn: "That's fifteen euros." },
+          { pt: "dezasseis", hint: "de-za-SAYSH", en: "sixteen", examplePt: "Dezasseis, se faz favor.", exampleEn: "Sixteen, please." },
+          { pt: "dezassete", hint: "de-za-SET-te", en: "seventeen", examplePt: "Dezassete euros.", exampleEn: "Seventeen euros." },
+          { pt: "dezoito", hint: "de-ZOY-too", en: "eighteen", examplePt: "Até às dezoito.", exampleEn: "Until six in the evening." },
+          { pt: "dezanove", hint: "de-za-NO-ve", en: "nineteen", examplePt: "Dezanove, quase vinte.", exampleEn: "Nineteen, almost twenty." },
+          { pt: "vinte", hint: "VEEN-te", en: "twenty", examplePt: "Vinte euros.", exampleEn: "Twenty euros." },
           { pt: "euro / euros", hint: "EH-oo-roo", en: "euro / euros", examplePt: "Dois euros.", exampleEn: "Two euros." },
           { pt: "quanto custa?", hint: "KWAN-too KOOSH-tuh", en: "how much does it cost?", examplePt: "Quanto custa o jornal?", exampleEn: "How much is the paper?" },
           { pt: "se faz favor", hint: "suh fash fuh-VOR", en: "please (Portugal)", examplePt: "A conta, se faz favor.", exampleEn: "The bill, please." },
@@ -245,9 +254,11 @@ export const a1Lessons: Lesson[] = [
       {
         type: "grammar",
         title: "Um café, uma bica",
-        body: "Um is masculine, uma feminine. Café, pastel, jornal take um; bica, água, conta take uma. Prices: dois euros e cinquenta (2,50 €). In Portugal 'please' at a counter is se faz favor more often than por favor.",
+        body: "Um is masculine, uma feminine. Café, pastel, jornal take um; bica, água, conta take uma. Prices: dois euros e cinquenta (2,50 €). In Portugal 'please' at a counter is se faz favor more often than por favor. The teens are their own words — and sixteen to nineteen keep the extra s: dezasseis, not the Brazilian dezesseis.",
         examples: [
           { pt: "Um, dois, três, quatro, cinco.", en: "1–5" },
+          { pt: "Onze, doze, treze, catorze, quinze.", en: "11–15" },
+          { pt: "Dezasseis, dezassete, dezoito, dezanove, vinte.", en: "16–20 — notice dezasseis, dezassete, dezanove." },
           { pt: "Fica em um euro e vinte.", en: "That's one euro twenty." },
           { pt: "Quanto custa uma água?", en: "How much is a water?" },
         ],
@@ -275,6 +286,9 @@ export const a1Lessons: Lesson[] = [
       { id: "q3", kind: "choice", prompt: "The very Portuguese 'please' is…", options: ["Por favor agora", "Se faz favor", "Please-o", "Com licença só"], answer: 1, explain: "Se faz favor is the counter classic." },
       { id: "q4", kind: "truefalse", prompt: "“Uma bica” is grammatically feminine.", options: ["True", "False"], answer: 0, explain: "Uma + feminine noun." },
       { id: "q5", kind: "choice", prompt: "Dez is…", options: ["2", "10", "16", "20"], answer: 1, explain: "Dez = ten." },
+      { id: "q6", kind: "choice", prompt: "Quinze is…", options: ["5", "11", "15", "20"], answer: 2, explain: "Quinze = 15." },
+      { id: "q7", kind: "choice", prompt: "Sixteen in Portugal is…", options: ["dezesseis", "dezasseis", "dezaseis", "sixteen"], answer: 1, explain: "European Portuguese: dezasseis, dezassete, dezanove. Brazil writes dezesseis." },
+      { id: "q8", kind: "listen", prompt: "Which number?", speak: "Catorze.", options: ["12", "13", "14", "15"], answer: 2, explain: "Catorze = 14." },
     ],
   },
   {
