@@ -48,10 +48,38 @@
   --motion-slow: 400ms;
 }
 
+/* Night kitchen: same cream as ink, azulejo catching the lamp — not generic OLED. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-bg: #141922;
+    --color-surface: #1c2430;
+    --color-surface-2: #273140;
+    --color-fg: #f3eee6;
+    --color-muted: #b7aea3;
+    --color-subtle: #8e867c;
+    --color-accent: #8fb6d4;
+    --color-accent-fg: #12202c;
+    --color-tile: #a8c8e0;
+    --color-soft: #243548;
+    --color-border: #3a4554;
+    --color-success: #6fad88;
+    --color-success-fg: #0f1a14;
+    --color-danger: #d4897e;
+    --color-danger-fg: #2a1210;
+    --color-warn: #d4a86a;
+    --shadow-border:
+      0 0 0 1px rgb(243 238 230 / 0.08), 0 1px 2px rgb(0 0 0 / 0.35);
+    --shadow-border-hover:
+      0 0 0 1px rgb(243 238 230 / 0.14), 0 8px 24px -12px rgb(0 0 0 / 0.55);
+  }
+}
+
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    color-scheme: light dark;
   }
 
   html,
@@ -103,10 +131,10 @@
 .azulejo-band {
   background-color: var(--color-accent);
   background-image:
-    linear-gradient(45deg, rgb(255 255 255 / 0.07) 25%, transparent 25%),
-    linear-gradient(-45deg, rgb(255 255 255 / 0.07) 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, rgb(255 255 255 / 0.07) 75%),
-    linear-gradient(-45deg, transparent 75%, rgb(255 255 255 / 0.07) 75%);
+    linear-gradient(45deg, color-mix(in srgb, var(--color-accent-fg) 12%, transparent) 25%, transparent 25%),
+    linear-gradient(-45deg, color-mix(in srgb, var(--color-accent-fg) 12%, transparent) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, color-mix(in srgb, var(--color-accent-fg) 12%, transparent) 75%),
+    linear-gradient(-45deg, transparent 75%, color-mix(in srgb, var(--color-accent-fg) 12%, transparent) 75%);
   background-size: 18px 18px;
   background-position:
     0 0,
@@ -121,6 +149,6 @@
 }
 
 img.scene {
-  outline: 1px solid rgb(26 23 20 / 0.1);
+  outline: 1px solid color-mix(in srgb, var(--color-fg) 12%, transparent);
   outline-offset: -1px;
 }

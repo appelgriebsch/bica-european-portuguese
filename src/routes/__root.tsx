@@ -28,7 +28,16 @@ export const Route = createRootRoute({
           "European Portuguese in sips — byte-sized lessons from A1 to C1, with quizzes and café conversations.",
       },
       { name: "apple-mobile-web-app-title", content: APP_NAME },
-      { name: "theme-color", content: "#1E4D73" },
+      {
+        name: "theme-color",
+        content: "#1E4D73",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        name: "theme-color",
+        content: "#141922",
+        media: "(prefers-color-scheme: dark)",
+      },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
       { property: "og:title", content: APP_NAME },
