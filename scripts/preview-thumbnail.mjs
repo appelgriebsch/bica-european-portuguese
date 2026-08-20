@@ -21,7 +21,10 @@ const browser = await chromium.launch({
 });
 
 try {
-  const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  const page = await browser.newPage({
+    viewport: { width: 1280, height: 800 },
+    colorScheme: "light",
+  });
 
   // `domcontentloaded`, not `networkidle`: Vite keeps an HMR websocket open, so
   // networkidle never settles and would burn the whole timeout.

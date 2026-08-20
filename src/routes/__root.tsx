@@ -50,6 +50,9 @@ export const Route = createRootRoute({
             { property: "og:image", content: ogImage },
             { property: "og:image:width", content: "1200" },
             { property: "og:image:height", content: "630" },
+            { property: "og:image:alt", content: "Bica — European Portuguese in sips" },
+            { name: "twitter:image", content: ogImage },
+            { name: "twitter:title", content: APP_NAME },
           ]
         : []),
       ...(xBanner
