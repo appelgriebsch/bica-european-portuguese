@@ -20,7 +20,8 @@ const nav = [
       p.startsWith("/listen") ||
       p.startsWith("/read") ||
       p.startsWith("/review") ||
-      p.startsWith("/grammar"),
+      p.startsWith("/grammar") ||
+      p.startsWith("/verbs"),
   },
   { to: "/me", label: "You", icon: UserRound, match: (p: string) => p === "/me" || p === "/login" },
 ] as const;

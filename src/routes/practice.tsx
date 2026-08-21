@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BookOpen, Check, Headphones, MessageCircle, PenLine, RotateCcw } from "lucide-react";
+import { BookOpen, Check, Headphones, MessageCircle, PenLine, RotateCcw, WholeWord } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import {
   dueVocab,
@@ -9,6 +9,7 @@ import {
   radioBulletins,
   readingPieces,
   speakScenarios,
+  verbDesks,
   workingLevel,
 } from "@/data/curriculum";
 import { useProgress } from "@/lib/progress-store";
@@ -25,9 +26,11 @@ function PracticePage() {
   const nextRadio = firstIncompleteOf(radioBulletins, doneIds, level);
   const nextRead = firstIncompleteOf(readingPieces, doneIds, level);
   const nextGram = firstIncompleteOf(grammarDrills, doneIds, level);
+  const nextVerb = firstIncompleteOf(verbDesks, doneIds, level);
   const radioDone = radioBulletins.filter((b) => doneIds.has(b.id)).length;
   const readDone = readingPieces.filter((p) => doneIds.has(p.id)).length;
   const gramDone = grammarDrills.filter((d) => doneIds.has(d.id)).length;
+  const verbDone = verbDesks.filter((d) => doneIds.has(d.id)).length;
   const dueCount = dueVocab(Object.keys(completed), cards, todayKey()).length;
 
 
@@ -36,7 +39,7 @@ function PracticePage() {
       <h1 className="font-display text-3xl font-medium tracking-tight">Practice</h1>
       <p className="mt-2 text-muted">
         The path teaches. This page is the country: a bulletin, a page, a café
-        counter, a grammar drill, the words you already met.
+        counter, a grammar drill, a verb desk, the words you already met.
       </p>
 
       <ul className="mt-6 grid gap-3">
@@ -111,6 +114,26 @@ function PracticePage() {
               <span className="mt-1 block text-sm text-muted">
                 {nextGram.level}: {nextGram.titlePt}. Three drills on every
                 level, {nextGram.minutes} min each.
+              </span>
+            </span>
+          </Link>
+        </li>
+        <li>
+          <Link
+            to="/verbs"
+            className="flex items-start gap-3 rounded-[var(--radius-lg)] bg-surface p-4 no-underline shadow-[var(--shadow-border)]"
+          >
+            <WholeWord className="mt-0.5 size-5 shrink-0 text-accent" />
+            <span>
+              <span className="block text-xs font-medium uppercase tracking-wider text-accent">
+                Verbs · {verbDone}/{verbDesks.length}
+              </span>
+              <span className="mt-1 block font-display text-xl font-medium text-fg">
+                Verbos
+              </span>
+              <span className="mt-1 block text-sm text-muted">
+                {nextVerb.level}: {nextVerb.titlePt}. Persons, then a quiz.
+                Present through will, would, and if.
               </span>
             </span>
           </Link>
@@ -247,6 +270,56 @@ function PracticePage() {
                             <Check className="size-4" />
                           ) : (
                             <PenLine className="size-4" />
+                          )}
+                        </span>
+                        <span className="min-w-0 flex-1 overflow-hidden">
+                          <span className="block truncate font-medium text-fg">
+                            {d.titlePt}
+                          </span>
+                          <span className="block truncate text-xs text-subtle">
+                            {d.minutes} min · {d.focus}
+                          </span>
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+      <section className="mt-8">
+        <h2 className="font-display text-xl font-medium">Verbs by level</h2>
+        <div className="mt-3 space-y-6">
+          {levels.map((lv) => {
+            const desks = verbDesks.filter((d) => d.level === lv.id);
+            const done = desks.filter((d) => doneIds.has(d.id)).length;
+            return (
+              <div key={lv.id}>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-accent">
+                  {lv.id} · {done}/{desks.length}
+                </p>
+                <ul className="grid min-w-0 gap-2">
+                  {desks.map((d) => (
+                    <li key={d.id} className="min-w-0">
+                      <Link
+                        to="/verbs/$id"
+                        params={{ id: d.id }}
+                        className="flex min-w-0 w-full items-center gap-3 rounded-[var(--radius-md)] bg-surface px-3 py-3 no-underline shadow-[var(--shadow-border)]"
+                      >
+                        <span
+                          className={cn(
+                            "grid size-9 shrink-0 place-items-center rounded-[var(--radius-sm)]",
+                            doneIds.has(d.id)
+                              ? "bg-success text-success-fg"
+                              : "bg-soft text-accent",
+                          )}
+                        >
+                          {doneIds.has(d.id) ? (
+                            <Check className="size-4" />
+                          ) : (
+                            <WholeWord className="size-4" />
                           )}
                         </span>
                         <span className="min-w-0 flex-1 overflow-hidden">

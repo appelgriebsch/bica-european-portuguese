@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check, Clock3, PenLine } from "lucide-react";
+import { Check, Clock3, PenLine, WholeWord } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
-import { grammarDrills, lessons, levels, units } from "@/data/curriculum";
+import { grammarDrills, lessons, levels, units, verbDesks } from "@/data/curriculum";
 import { useProgress } from "@/lib/progress-store";
 import { cn } from "@/lib/utils";
 
@@ -15,14 +15,14 @@ function PathPage() {
       <h1 className="font-display text-3xl font-medium tracking-tight">The path</h1>
       <p className="mt-2 text-muted">
         A1 through C1, in European Portuguese. Jump in anywhere — adults skip
-        what they already know. After each level, grammar drills to lock the
-        pattern.
+        what they already know. After each level, grammar and a verb desk.
       </p>
 
       <div className="mt-8 space-y-12">
         {levels.map((lv) => {
           const levelUnits = units.filter((u) => u.level === lv.id);
           const drills = grammarDrills.filter((d) => d.level === lv.id);
+          const desks = verbDesks.filter((d) => d.level === lv.id);
           return (
             <div key={lv.id}>
               <p className="text-xs font-medium uppercase tracking-wider text-accent">
@@ -147,6 +147,72 @@ function PathPage() {
                               </span>
                               <span className="mt-0.5 block truncate text-xs text-subtle">
                                 {drill.minutes} min · {drill.focus}
+                                {score
+                                  ? ` · ${score.quizScore}/${score.quizTotal} on the quiz`
+                                  : ""}
+                              </span>
+                            </span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+
+                <section
+                  id={`verbs-${lv.id}`}
+                  className="scroll-mt-20 min-w-0 rounded-[var(--radius-xl)] bg-soft p-3"
+                >
+                  <div className="mb-3 flex flex-col gap-2 px-1 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium uppercase tracking-wider text-accent">
+                        {lv.id} · Verbos
+                      </p>
+                      <h3 className="font-display text-xl font-medium">Verbs</h3>
+                      <p className="text-sm text-muted">
+                        The ones that open the day, with persons and a quiz.
+                      </p>
+                    </div>
+                    <Link
+                      to="/verbs"
+                      className="shrink-0 text-sm font-medium text-accent no-underline hover:underline"
+                    >
+                      All levels
+                    </Link>
+                  </div>
+                  <ul className="grid min-w-0 gap-2">
+                    {desks.map((desk) => {
+                      const score = completed[desk.id];
+                      return (
+                        <li key={desk.id} className="min-w-0">
+                          <Link
+                            to="/verbs/$id"
+                            params={{ id: desk.id }}
+                            className="flex min-w-0 items-center gap-3 rounded-[var(--radius-md)] bg-surface p-3 no-underline shadow-[var(--shadow-border)] transition-shadow duration-[var(--motion-quick)] hover:shadow-[var(--shadow-border-hover)]"
+                          >
+                            <span
+                              className={cn(
+                                "grid size-10 shrink-0 place-items-center rounded-[var(--radius-sm)]",
+                                score
+                                  ? "bg-success text-success-fg"
+                                  : "bg-accent text-accent-fg",
+                              )}
+                            >
+                              {score ? (
+                                <Check className="size-4" />
+                              ) : (
+                                <WholeWord className="size-4" />
+                              )}
+                            </span>
+                            <span className="min-w-0 flex-1 overflow-hidden">
+                              <span className="block truncate font-medium text-fg">
+                                {desk.titlePt}
+                                <span className="ml-2 hidden font-sans text-sm font-normal text-muted sm:inline">
+                                  {desk.title}
+                                </span>
+                              </span>
+                              <span className="mt-0.5 block truncate text-xs text-subtle">
+                                {desk.minutes} min · {desk.focus}
                                 {score
                                   ? ` · ${score.quizScore}/${score.quizTotal} on the quiz`
                                   : ""}

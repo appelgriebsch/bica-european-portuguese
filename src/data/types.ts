@@ -122,3 +122,33 @@ export type GrammarDrill = {
   examples: { pt: string; en: string }[];
   quiz: QuizQuestion[];
 };
+
+export type VerbForm = {
+  person: string;
+  form: string;
+};
+
+export type VerbTense = {
+  label: string;
+  labelEn: string;
+  forms: VerbForm[];
+};
+
+export type VerbEntry = {
+  inf: string;
+  en: string;
+  note?: string;
+  tenses: VerbTense[];
+};
+
+export type VerbDesk = {
+  id: string;
+  level: CefrLevel;
+  minutes: number;
+  title: string;
+  titlePt: string;
+  focus: string;
+  body: string;
+  verbs: VerbEntry[];
+  quiz: QuizQuestion[];
+};

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, BookOpen, Clock3, Headphones, MessageCircle, PenLine, RotateCcw } from "lucide-react";
+import { ArrowRight, BookOpen, Clock3, Headphones, MessageCircle, PenLine, RotateCcw, WholeWord } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { StartLevelPicker } from "@/components/start-level";
@@ -14,6 +14,7 @@ import {
   levels,
   radioBulletins,
   readingPieces,
+  verbDesks,
   workingLevel,
 } from "@/data/curriculum";
 import { warmVoices } from "@/lib/tts";
@@ -42,6 +43,7 @@ function Home() {
   const nextRadio = firstIncompleteOf(radioBulletins, doneIds, level);
   const nextRead = firstIncompleteOf(readingPieces, doneIds, level);
   const nextGram = firstIncompleteOf(grammarDrills, doneIds, level);
+  const nextVerb = firstIncompleteOf(verbDesks, doneIds, level);
   const dueCount = dueVocab(Object.keys(completed), cards, todayKey()).length;
   const doneCount = lessons.filter((l) => doneIds.has(l.id)).length;
   const pct = Math.round((doneCount / lessons.length) * 100);
@@ -159,16 +161,6 @@ function Home() {
           </span>
         </Link>
         <Link
-          to="/speak"
-          className="flex items-start gap-3 rounded-[var(--radius-lg)] bg-surface p-4 no-underline shadow-[var(--shadow-border)]"
-        >
-          <MessageCircle className="mt-0.5 size-5 shrink-0 text-accent" />
-          <span>
-            <span className="block font-medium text-fg">Speak</span>
-            <span className="mt-1 block text-sm text-muted">A short scene</span>
-          </span>
-        </Link>
-        <Link
           to="/grammar"
           className="flex items-start gap-3 rounded-[var(--radius-lg)] bg-surface p-4 no-underline shadow-[var(--shadow-border)]"
         >
@@ -178,6 +170,28 @@ function Home() {
             <span className="mt-1 block text-sm text-muted">
               {nextGram.level} · {nextGram.titlePt}
             </span>
+          </span>
+        </Link>
+        <Link
+          to="/verbs"
+          className="flex items-start gap-3 rounded-[var(--radius-lg)] bg-surface p-4 no-underline shadow-[var(--shadow-border)]"
+        >
+          <WholeWord className="mt-0.5 size-5 shrink-0 text-accent" />
+          <span>
+            <span className="block font-medium text-fg">Verbs</span>
+            <span className="mt-1 block text-sm text-muted">
+              {nextVerb.level} · {nextVerb.titlePt}
+            </span>
+          </span>
+        </Link>
+        <Link
+          to="/speak"
+          className="flex items-start gap-3 rounded-[var(--radius-lg)] bg-surface p-4 no-underline shadow-[var(--shadow-border)]"
+        >
+          <MessageCircle className="mt-0.5 size-5 shrink-0 text-accent" />
+          <span>
+            <span className="block font-medium text-fg">Speak</span>
+            <span className="mt-1 block text-sm text-muted">A short scene</span>
           </span>
         </Link>
       </section>
@@ -190,6 +204,8 @@ function Home() {
             const done = inLevel.filter((l) => doneIds.has(l.id)).length;
             const grams = grammarDrills.filter((d) => d.level === lv.id);
             const gDone = grams.filter((d) => doneIds.has(d.id)).length;
+            const desks = verbDesks.filter((d) => d.level === lv.id);
+            const vDone = desks.filter((d) => doneIds.has(d.id)).length;
             return (
               <li key={lv.id}>
                 <Link
@@ -204,7 +220,7 @@ function Home() {
                     <span className="mt-0.5 block text-sm text-muted">{lv.blurb}</span>
                     <span className="mt-2 block text-xs tabular-nums text-subtle">
                       {done}/{inLevel.length} lessons · {gDone}/{grams.length}{" "}
-                      grammar
+                      grammar · {vDone}/{desks.length} verbs
                     </span>
                   </span>
                 </Link>
@@ -216,8 +232,8 @@ function Home() {
 
       <p className="mt-8 flex items-center gap-2 text-sm text-subtle">
         <Clock3 className="size-4" />
-        {lessons.length} lessons · {grammarDrills.length} grammar drills · none
-        over 18 minutes
+        {lessons.length} lessons · {grammarDrills.length} grammar · {verbDesks.length}{" "}
+        verb desks · none over 18 minutes
       </p>
     </AppShell>
   );

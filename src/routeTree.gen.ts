@@ -17,6 +17,7 @@ import { Route as PathRouteImport } from './routes/path'
 import { Route as PracticeRouteImport } from './routes/practice'
 import { Route as ReviewRouteImport } from './routes/review'
 import { Route as SpeakRouteImport } from './routes/speak'
+import { Route as VerbsRouteImport } from './routes/verbs'
 import { Route as GrammarIndexRouteImport } from './routes/grammar/index'
 import { Route as GrammarIdRouteImport } from './routes/grammar/$id'
 import { Route as LessonIdRouteImport } from './routes/lesson/$id'
@@ -24,6 +25,8 @@ import { Route as ListenIdRouteImport } from './routes/listen/$id'
 import { Route as ReadIdRouteImport } from './routes/read/$id'
 import { Route as SpeakIndexRouteImport } from './routes/speak/index'
 import { Route as SpeakIdRouteImport } from './routes/speak/$id'
+import { Route as VerbsIndexRouteImport } from './routes/verbs/index'
+import { Route as VerbsIdRouteImport } from './routes/verbs/$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -66,6 +69,11 @@ const SpeakRoute = SpeakRouteImport.update({
   path: '/speak',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerbsRoute = VerbsRouteImport.update({
+  id: '/verbs',
+  path: '/verbs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GrammarIndexRoute = GrammarIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -101,6 +109,16 @@ const SpeakIdRoute = SpeakIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => SpeakRoute,
 } as any)
+const VerbsIndexRoute = VerbsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => VerbsRoute,
+} as any)
+const VerbsIdRoute = VerbsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => VerbsRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -116,13 +134,16 @@ export interface FileRoutesByFullPath {
   '/practice': typeof PracticeRoute
   '/review': typeof ReviewRoute
   '/speak': typeof SpeakRouteWithChildren
+  '/verbs': typeof VerbsRouteWithChildren
   '/grammar/$id': typeof GrammarIdRoute
   '/lesson/$id': typeof LessonIdRoute
   '/listen/$id': typeof ListenIdRoute
   '/read/$id': typeof ReadIdRoute
   '/speak/$id': typeof SpeakIdRoute
+  '/verbs/$id': typeof VerbsIdRoute
   '/grammar/': typeof GrammarIndexRoute
   '/speak/': typeof SpeakIndexRoute
+  '/verbs/': typeof VerbsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
@@ -137,8 +158,10 @@ export interface FileRoutesByTo {
   '/listen/$id': typeof ListenIdRoute
   '/read/$id': typeof ReadIdRoute
   '/speak/$id': typeof SpeakIdRoute
+  '/verbs/$id': typeof VerbsIdRoute
   '/grammar': typeof GrammarIndexRoute
   '/speak': typeof SpeakIndexRoute
+  '/verbs': typeof VerbsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
@@ -151,13 +174,16 @@ export interface FileRoutesById {
   '/practice': typeof PracticeRoute
   '/review': typeof ReviewRoute
   '/speak': typeof SpeakRouteWithChildren
+  '/verbs': typeof VerbsRouteWithChildren
   '/grammar/$id': typeof GrammarIdRoute
   '/lesson/$id': typeof LessonIdRoute
   '/listen/$id': typeof ListenIdRoute
   '/read/$id': typeof ReadIdRoute
   '/speak/$id': typeof SpeakIdRoute
+  '/verbs/$id': typeof VerbsIdRoute
   '/grammar/': typeof GrammarIndexRoute
   '/speak/': typeof SpeakIndexRoute
+  '/verbs/': typeof VerbsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
@@ -171,13 +197,16 @@ export interface FileRouteTypes {
     | '/practice'
     | '/review'
     | '/speak'
+    | '/verbs'
     | '/grammar/$id'
     | '/lesson/$id'
     | '/listen/$id'
     | '/read/$id'
     | '/speak/$id'
+    | '/verbs/$id'
     | '/grammar/'
     | '/speak/'
+    | '/verbs/'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -192,8 +221,10 @@ export interface FileRouteTypes {
     | '/listen/$id'
     | '/read/$id'
     | '/speak/$id'
+    | '/verbs/$id'
     | '/grammar'
     | '/speak'
+    | '/verbs'
     | '/api/auth/$'
   id:
     | '__root__'
@@ -205,13 +236,16 @@ export interface FileRouteTypes {
     | '/practice'
     | '/review'
     | '/speak'
+    | '/verbs'
     | '/grammar/$id'
     | '/lesson/$id'
     | '/listen/$id'
     | '/read/$id'
     | '/speak/$id'
+    | '/verbs/$id'
     | '/grammar/'
     | '/speak/'
+    | '/verbs/'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
@@ -224,6 +258,7 @@ export interface RootRouteChildren {
   PracticeRoute: typeof PracticeRoute
   ReviewRoute: typeof ReviewRoute
   SpeakRoute: typeof SpeakRouteWithChildren
+  VerbsRoute: typeof VerbsRouteWithChildren
   LessonIdRoute: typeof LessonIdRoute
   ListenIdRoute: typeof ListenIdRoute
   ReadIdRoute: typeof ReadIdRoute
@@ -288,6 +323,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SpeakRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/verbs': {
+      id: '/verbs'
+      path: '/verbs'
+      fullPath: '/verbs'
+      preLoaderRoute: typeof VerbsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/grammar/': {
       id: '/grammar/'
       path: '/'
@@ -337,6 +379,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SpeakIdRouteImport
       parentRoute: typeof SpeakRoute
     }
+    '/verbs/': {
+      id: '/verbs/'
+      path: '/'
+      fullPath: '/verbs/'
+      preLoaderRoute: typeof VerbsIndexRouteImport
+      parentRoute: typeof VerbsRoute
+    }
+    '/verbs/$id': {
+      id: '/verbs/$id'
+      path: '/$id'
+      fullPath: '/verbs/$id'
+      preLoaderRoute: typeof VerbsIdRouteImport
+      parentRoute: typeof VerbsRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -372,6 +428,18 @@ const SpeakRouteChildren: SpeakRouteChildren = {
 
 const SpeakRouteWithChildren = SpeakRoute._addFileChildren(SpeakRouteChildren)
 
+interface VerbsRouteChildren {
+  VerbsIdRoute: typeof VerbsIdRoute
+  VerbsIndexRoute: typeof VerbsIndexRoute
+}
+
+const VerbsRouteChildren: VerbsRouteChildren = {
+  VerbsIdRoute: VerbsIdRoute,
+  VerbsIndexRoute: VerbsIndexRoute,
+}
+
+const VerbsRouteWithChildren = VerbsRoute._addFileChildren(VerbsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   GrammarRoute: GrammarRouteWithChildren,
@@ -381,6 +449,7 @@ const rootRouteChildren: RootRouteChildren = {
   PracticeRoute: PracticeRoute,
   ReviewRoute: ReviewRoute,
   SpeakRoute: SpeakRouteWithChildren,
+  VerbsRoute: VerbsRouteWithChildren,
   LessonIdRoute: LessonIdRoute,
   ListenIdRoute: ListenIdRoute,
   ReadIdRoute: ReadIdRoute,
