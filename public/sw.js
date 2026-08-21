@@ -1,16 +1,16 @@
 /* Bica offline cache.
- * Navigations: network first, then the last copy of that page, then /.
- * Hashed /assets: cache first (immutable).
- * Everything else same-origin GET: stale-while-revalidate.
- * Auth, APIs, and server functions stay on the network.
+ *
+ * Must not intercept module scripts — Safari reports that as
+ * "Importing a module script failed" and the page dies.
+ * Navigations stay network-first so a new deploy is never hidden
+ * behind a cached shell that points at deleted /assets hashes.
  */
-const VERSION = "bica-offline-v1";
+const VERSION = "bica-offline-v2";
 const PAGES = VERSION + "-pages";
 const RUNTIME = VERSION + "-runtime";
 const ASSETS = VERSION + "-assets";
 
 const PRECACHE = [
-  "/",
   "/favicon.svg",
   "/icon-180.png",
   "/icon-192.png",
@@ -26,7 +26,7 @@ const PRECACHE = [
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
-      const cache = await caches.open(PAGES);
+      const cache = await caches.open(RUNTIME);
       await Promise.all(
         PRECACHE.map((url) =>
           cache.add(url).catch(() => {
@@ -57,8 +57,14 @@ function isNetworkOnly(url) {
     p.startsWith("/auth/") ||
     p.startsWith("/_server") ||
     p.includes("/_serverFn") ||
-    p.startsWith("/__grok/")
+    p.startsWith("/__grok/") ||
+    p === "/sw.js"
   );
+}
+
+function isScriptRequest(req) {
+  const d = req.destination;
+  return d === "script" || d === "worker" || d === "sharedworker" || d === "audioworklet";
 }
 
 self.addEventListener("fetch", (event) => {
@@ -67,6 +73,9 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
   if (isNetworkOnly(url)) return;
+  // Let the browser load JS itself. Intercepting module scripts on Safari
+  // (and claiming the page mid-load) is what broke the public site.
+  if (isScriptRequest(req)) return;
 
   if (req.mode === "navigate") {
     event.respondWith(networkFirstPage(req, url));
@@ -74,7 +83,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (url.pathname.startsWith("/assets/")) {
-    event.respondWith(cacheFirst(req, ASSETS));
+    event.respondWith(networkFirstCache(req, ASSETS));
     return;
   }
 
@@ -84,8 +93,8 @@ self.addEventListener("fetch", (event) => {
 async function networkFirstPage(req, url) {
   const cache = await caches.open(PAGES);
   try {
-    const fresh = await fetch(req);
-    if (fresh && fresh.ok) {
+    const fresh = await fetch(req, { cache: "no-store" });
+    if (fresh && fresh.ok && isHtml(fresh)) {
       await cache.put(req, fresh.clone());
       if (url.pathname === "/") await cache.put("/", fresh.clone());
     }
@@ -102,13 +111,17 @@ async function networkFirstPage(req, url) {
   }
 }
 
-async function cacheFirst(req, cacheName) {
+async function networkFirstCache(req, cacheName) {
   const cache = await caches.open(cacheName);
-  const hit = await cache.match(req);
-  if (hit) return hit;
-  const fresh = await fetch(req);
-  if (fresh && fresh.ok) await cache.put(req, fresh.clone());
-  return fresh;
+  try {
+    const fresh = await fetch(req);
+    if (fresh && fresh.ok) await cache.put(req, fresh.clone());
+    return fresh;
+  } catch {
+    const hit = await cache.match(req);
+    if (hit) return hit;
+    throw new Error("offline");
+  }
 }
 
 async function staleWhileRevalidate(req, cacheName) {
@@ -121,4 +134,8 @@ async function staleWhileRevalidate(req, cacheName) {
     })
     .catch(() => hit);
   return hit || fetching;
+}
+
+function isHtml(res) {
+  return String(res.headers.get("content-type") ?? "").includes("text/html");
 }

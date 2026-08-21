@@ -1,6 +1,7 @@
 import { Smartphone } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { clearModuleReloadToken } from "@/lib/error-component";
 
 export function useOnline() {
   const [online, setOnline] = useState(true);
@@ -47,9 +48,18 @@ export function PwaRegister() {
     if (!import.meta.env.PROD) return;
     if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
     if (isEmbeddedFrame()) return;
-    void navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).catch(() => {
-      /* install still works from the manifest; cache can wait */
-    });
+    const register = () => {
+      clearModuleReloadToken();
+      void navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).catch(() => {
+        /* install still works from the manifest; cache can wait */
+      });
+    };
+    if (document.readyState === "complete") {
+      register();
+      return;
+    }
+    window.addEventListener("load", register, { once: true });
+    return () => window.removeEventListener("load", register);
   }, []);
   return null;
 }

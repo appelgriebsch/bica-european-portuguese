@@ -152,20 +152,21 @@ export function stripInstallParams(url) {
 }
 
 /** Home-screen name: branded title from site.json, else the grok.me slug. */
-export function brandedAppName(hostHeader) {
-  const siteTitle = String(readOgSite().title ?? "").trim();
+export function brandedAppName(hostHeader, site) {
+  const resolved = site && typeof site === "object" ? site : readOgSite();
+  const siteTitle = String(resolved.title ?? "").trim();
   if (siteTitle) return siteTitle;
   return appNameFromHost(hostHeader);
 }
 
-export function renderInstallPageHtml(template, { host, url } = {}) {
+export function renderInstallPageHtml(template, { host, url, site } = {}) {
   return String(template)
-    .replaceAll("{{APP_NAME}}", escapeHtml(brandedAppName(host)))
+    .replaceAll("{{APP_NAME}}", escapeHtml(brandedAppName(host, site)))
     .replaceAll("{{APP_URL}}", escapeHtml(stripInstallParams(url)));
 }
 
-export function renderWebManifest(hostHeader) {
-  const name = brandedAppName(hostHeader);
+export function renderWebManifest(hostHeader, site) {
+  const name = brandedAppName(hostHeader, site);
   return JSON.stringify(
     {
       name,

@@ -78,6 +78,11 @@ export const Route = createRootRoute({
         <HeadContent />
       </head>
       <body>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var k="bica-module-reload";function stuck(m){return /importing a module script failed|failed to fetch dynamically imported module|failed to load module script/i.test(String(m||""))}function go(){try{if(sessionStorage.getItem(k)==="1")return;sessionStorage.setItem(k,"1")}catch(e){return}var done=function(){location.reload()};var t=[];if(navigator.serviceWorker){t.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}))}if(window.caches){t.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(x){return caches.delete(x)}))}))}Promise.all(t).then(done,done)}window.addEventListener("error",function(e){if(stuck(e&&e.message))go()});window.addEventListener("unhandledrejection",function(e){var r=e&&e.reason;if(stuck(r&&(r.message||r)))go()})})();`,
+          }}
+        />
         <PreviewHostBridge />
         <PwaRegister />
         <AuthProvider>
