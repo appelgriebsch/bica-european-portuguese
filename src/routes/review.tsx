@@ -5,7 +5,6 @@ import { SpeakButton } from "@/components/speak-button";
 import { Button } from "@/components/ui/button";
 import { dueVocab, levels, vocabFromCompleted, type CatalogVocab } from "@/data/curriculum";
 import type { CefrLevel } from "@/data/types";
-import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { saveProgressSnapshot } from "@/lib/progress-server";
 import { useProgress } from "@/lib/progress-store";
 import { REVIEW_SESSION_CAP } from "@/lib/srs";
@@ -47,7 +46,6 @@ function buildQueue(items: CatalogVocab[], mode: Mode): QueueCard[] {
 }
 
 function ReviewPage() {
-  const user = useCurrentUser();
   const completed = useProgress((s) => s.completed);
   const cards = useProgress((s) => s.cards);
   const gradeVocab = useProgress((s) => s.gradeVocab);
@@ -93,11 +91,9 @@ function ReviewPage() {
   function finishSession(knewCount: number) {
     touchStudy(4 + knewCount);
     setPhase("done");
-    if (user) {
-      void saveProgressSnapshot({ data: useProgress.getState().snapshot() }).catch(
-        () => undefined,
-      );
-    }
+    void saveProgressSnapshot({ data: useProgress.getState().snapshot() })
+      .then(() => useProgress.getState().markSynced())
+      .catch(() => undefined);
   }
 
   function advance(knew: boolean, current: QueueCard) {

@@ -134,10 +134,17 @@ export const saveProgressSnapshot = createServerFn({ method: "POST" })
         now()
       )
       on conflict (user_id) do update set
-        streak = excluded.streak,
-        last_study_date = excluded.last_study_date,
-        total_xp = excluded.total_xp,
-        vocab_cards = excluded.vocab_cards,
+        streak = greatest(user_stats.streak, excluded.streak),
+        last_study_date = case
+          when excluded.last_study_date is null then user_stats.last_study_date
+          when user_stats.last_study_date is null then excluded.last_study_date
+          when excluded.last_study_date::text > user_stats.last_study_date::text
+            then excluded.last_study_date
+          else user_stats.last_study_date
+        end,
+        total_xp = greatest(user_stats.total_xp, excluded.total_xp),
+        vocab_cards = coalesce(user_stats.vocab_cards, '{}'::jsonb)
+          || coalesce(excluded.vocab_cards, '{}'::jsonb),
         updated_at = now()
     `;
     for (const [lessonId, row] of Object.entries(data.completed)) {

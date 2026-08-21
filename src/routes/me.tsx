@@ -38,6 +38,10 @@ function MePage() {
             <div>
               <p className="font-medium">{user.displayName ?? "Signed in"}</p>
               <p className="text-sm text-muted">{user.primaryEmail}</p>
+              <p className="mt-2 text-sm text-subtle">
+                Lessons on this account follow you. If a device is behind, open
+                Bica there while signed in — it will catch up.
+              </p>
             </div>
             <Button variant="ghost" size="sm" onClick={() => void signOut()}>
               Sign out
@@ -47,8 +51,9 @@ function MePage() {
           <div>
             <p className="font-medium">Learning as a guest</p>
             <p className="mt-1 text-sm text-muted">
-              Sign in to keep the streak if you switch phones, and to speak with
-              a live partner.
+              {lessonDone > 0
+                ? "This path lives on this device only. Sign in here — with the same X or Google you use on the other phone or computer — so the lessons can follow you."
+                : "Sign in to keep the streak if you switch phones, and to speak with a live partner."}
             </p>
             <Button asChild className="mt-4">
               <Link to="/login">Sign in</Link>

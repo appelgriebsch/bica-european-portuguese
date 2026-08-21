@@ -27,7 +27,9 @@ export type ProgressState = {
   floor: CefrLevel;
   cards: Record<string, SrsCard>;
   hydrated: boolean;
+  lastSyncedAt: string | null;
   markHydrated: () => void;
+  markSynced: () => void;
   setFloor: (level: CefrLevel) => void;
   completeLesson: (lessonId: string, result: Omit<LessonResult, "completedAt">) => void;
   gradeVocab: (cardId: string, knew: boolean) => void;
@@ -64,7 +66,9 @@ export const useProgress = create<ProgressState>()(
       floor: "A1",
       cards: {},
       hydrated: false,
+      lastSyncedAt: null,
       markHydrated: () => set({ hydrated: true }),
+      markSynced: () => set({ lastSyncedAt: new Date().toISOString() }),
       setFloor: (level) => set({ floor: level }),
       completeLesson: (lessonId, result) => {
         const today = todayKey();
