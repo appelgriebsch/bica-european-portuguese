@@ -3,6 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { SpeakButton } from "@/components/speak-button";
 import { StartLevelPicker } from "@/components/start-level";
+import { InstallHint } from "@/components/pwa";
 import { lessons, vocabFromCompleted, workingLevel } from "@/data/curriculum";
 import { signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -80,6 +81,8 @@ function MePage() {
           Today will offer the next unfinished lesson from this level up.
         </p>
       </section>
+
+      <InstallHint className="mt-8" />
 
       <section className="mt-8">
         <div className="flex items-end justify-between gap-3">

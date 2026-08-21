@@ -6,6 +6,7 @@ import { useProgress } from "@/lib/progress-store";
 import { cn } from "@/lib/utils";
 import { ProgressSync } from "@/components/progress-sync";
 import { AzulejoMark } from "@/components/azulejo-mark";
+import { OfflineBanner } from "@/components/pwa";
 
 const nav = [
   { to: "/", label: "Today", icon: House, match: (p: string) => p === "/" },
@@ -105,6 +106,7 @@ export function AppShell({
           hideNav ? "pb-8" : "pb-28 md:pb-12",
         )}
       >
+        <OfflineBanner />
         {children}
       </main>
 

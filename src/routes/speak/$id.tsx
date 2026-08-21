@@ -9,6 +9,7 @@ import { sendChat } from "@/lib/chat-server";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { cn } from "@/lib/utils";
+import { useOnline } from "@/components/pwa";
 
 export const Route = createFileRoute("/speak/$id")({ component: SpeakScene });
 
@@ -21,6 +22,7 @@ function SpeakScene() {
     [id],
   );
   const { user, isPending } = useCurrentUserState();
+  const online = useOnline();
   const [turns, setTurns] = useState<Turn[]>(() =>
     scenario
       ? [
@@ -54,7 +56,7 @@ function SpeakScene() {
 
   async function onSend() {
     const text = draft.trim();
-    if (!text || busy || !scenario) return;
+    if (!text || busy || !scenario || !online) return;
     const nextTurns: Turn[] = [...turns, { role: "user", content: text }];
     setTurns(nextTurns);
     setDraft("");
@@ -134,6 +136,11 @@ function SpeakScene() {
       </ol>
 
       {error && <p className="mt-3 text-sm text-danger">{error}</p>}
+      {!online && (
+        <p className="mt-3 text-sm text-muted">
+          You're offline. The opener is here; replies wait for a connection.
+        </p>
+      )}
 
       <form
         className="sticky bottom-0 mt-6 flex gap-2 bg-bg py-3"
@@ -153,7 +160,7 @@ function SpeakScene() {
           maxLength={500}
           className="h-12 min-h-12 flex-1 rounded-[var(--radius-md)] border border-border bg-surface px-3 text-base text-fg outline-none ring-accent placeholder:text-subtle focus:ring-2"
         />
-        <Button type="submit" size="icon" disabled={busy || !draft.trim()} aria-label="Send">
+        <Button type="submit" size="icon" disabled={busy || !online || !draft.trim()} aria-label="Send">
           <Send />
         </Button>
       </form>

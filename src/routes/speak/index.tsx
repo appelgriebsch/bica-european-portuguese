@@ -3,11 +3,13 @@ import { AppShell } from "@/components/app-shell";
 import { speakScenarios } from "@/data/curriculum";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { cn } from "@/lib/utils";
+import { useOnline } from "@/components/pwa";
 
 export const Route = createFileRoute("/speak/")({ component: SpeakIndex });
 
 function SpeakIndex() {
   const { user, isPending } = useCurrentUserState();
+  const online = useOnline();
 
   return (
     <AppShell>
@@ -20,6 +22,12 @@ function SpeakIndex() {
       {!isPending && !user && (
         <p className="mt-4 rounded-[var(--radius-md)] bg-soft px-3 py-2 text-sm text-accent">
           Sign in to start a conversation — it uses a live tutor behind the scenes.
+        </p>
+      )}
+      {!online && (
+        <p className="mt-4 rounded-[var(--radius-md)] bg-soft px-3 py-2 text-sm text-fg">
+          Conversas needs a connection. Open a scene to read the opener, or come
+          back when you're online.
         </p>
       )}
 

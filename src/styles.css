@@ -1,6 +1,24 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,650&family=Figtree:wght@400;500;600;650&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
+
+/* Self-hosted so the path still has a face when the network is gone. */
+@font-face {
+  font-family: "Fraunces Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("@fontsource-variable/fraunces/files/fraunces-latin-opsz-normal.woff2")
+    format("woff2-variations");
+}
+
+@font-face {
+  font-family: "Figtree Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300 900;
+  src: url("@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2")
+    format("woff2-variations");
+}
 
 @theme {
   --color-bg: #f3eee6;
@@ -20,9 +38,9 @@
   --color-danger-fg: #fdf6f3;
   --color-warn: #8a5a22;
 
-  --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
-  --font-sans: "Figtree", "Segoe UI", system-ui, sans-serif;
-  --font-body: "Figtree", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Fraunces Variable", "Fraunces", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Figtree Variable", "Figtree", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Figtree Variable", "Figtree", "Segoe UI", system-ui, sans-serif;
 
   --text-2xs: 0.6875rem;
   --text-2xs--line-height: 1rem;
