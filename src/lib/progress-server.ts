@@ -4,6 +4,8 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import type { LessonResult } from "@/lib/progress-store";
 import type { SrsCard } from "@/lib/srs";
+import type { CefrLevel } from "@/data/types";
+import { asDayKey } from "@/lib/utils";
 
 const resultSchema = z.object({
   lessonId: z.string().min(1).max(80),
@@ -13,30 +15,51 @@ const resultSchema = z.object({
 });
 
 const srsCardSchema = z.object({
-  interval: z.number(),
-  ease: z.number(),
+  interval: z.coerce.number(),
+  ease: z.coerce.number(),
   due: z.string(),
-  reps: z.number(),
-  lapses: z.number(),
+  reps: z.coerce.number(),
+  lapses: z.coerce.number(),
 });
 
 const snapshotSchema = z.object({
-  completed: z.record(
-    z.string(),
-    z.object({
-      quizScore: z.number(),
-      quizTotal: z.number(),
-      xp: z.number(),
-      completedAt: z.string(),
-    }),
-  ),
-  xp: z.number(),
-  streak: z.number(),
+  completed: z
+    .record(
+      z.string(),
+      z.object({
+        quizScore: z.coerce.number(),
+        quizTotal: z.coerce.number(),
+        xp: z.coerce.number(),
+        completedAt: z.string(),
+      }),
+    )
+    .default({}),
+  xp: z.coerce.number(),
+  streak: z.coerce.number(),
   lastStudyDate: z.string().nullable(),
   cards: z.record(z.string(), srsCardSchema).optional(),
+  floor: z.enum(["A1", "A2", "B1", "B2", "C1"]).optional(),
 });
 
-export const fetchProgress = createServerFn({ method: "GET" })
+function parseCards(raw: unknown): Record<string, SrsCard> {
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    return raw as Record<string, SrsCard>;
+  }
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, SrsCard>;
+      }
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+/** POST, not GET — a cached GET was handing the second browser an empty path. */
+export const fetchProgress = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const sql = await getSql();
@@ -55,7 +78,7 @@ export const fetchProgress = createServerFn({ method: "GET" })
       streak: number;
       last_study_date: string | null;
       total_xp: number;
-      vocab_cards: Record<string, SrsCard> | string | null;
+      vocab_cards: unknown;
     }>`
       select streak, last_study_date, total_xp, vocab_cards
       from user_stats
@@ -64,29 +87,20 @@ export const fetchProgress = createServerFn({ method: "GET" })
     const completed: Record<string, LessonResult> = {};
     for (const r of rows) {
       completed[r.lesson_id] = {
-        quizScore: r.quiz_score,
-        quizTotal: r.quiz_total,
-        xp: r.xp,
+        quizScore: Number(r.quiz_score) || 0,
+        quizTotal: Number(r.quiz_total) || 0,
+        xp: Number(r.xp) || 0,
         completedAt: r.completed_at ?? new Date().toISOString(),
       };
     }
     const s = stats[0];
-    let cards: Record<string, SrsCard> = {};
-    const raw = s?.vocab_cards;
-    if (raw && typeof raw === "object") cards = raw;
-    else if (typeof raw === "string") {
-      try {
-        cards = JSON.parse(raw) as Record<string, SrsCard>;
-      } catch {
-        cards = {};
-      }
-    }
     return {
       completed,
-      xp: s?.total_xp ?? 0,
-      streak: s?.streak ?? 0,
-      lastStudyDate: s?.last_study_date ?? null,
-      cards,
+      xp: Number(s?.total_xp) || 0,
+      streak: Number(s?.streak) || 0,
+      lastStudyDate: asDayKey(s?.last_study_date),
+      cards: parseCards(s?.vocab_cards),
+      floor: "A1" as CefrLevel,
     };
   });
 
@@ -123,12 +137,13 @@ export const saveProgressSnapshot = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const cardsJson = JSON.stringify(data.cards ?? {});
+    const lastStudy = asDayKey(data.lastStudyDate);
     await sql`
       insert into user_stats (user_id, streak, last_study_date, total_xp, vocab_cards, updated_at)
       values (
         ${context.userId},
         ${data.streak},
-        ${data.lastStudyDate},
+        ${lastStudy},
         ${data.xp},
         ${cardsJson}::jsonb,
         now()

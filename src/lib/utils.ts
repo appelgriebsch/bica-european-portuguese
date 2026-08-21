@@ -24,6 +24,14 @@ export function yesterdayKey(d = new Date()): string {
   return todayKey(y);
 }
 
+/** YYYY-MM-DD from a date column, ISO string, or Date. */
+export function asDayKey(value: unknown): string | null {
+  if (value == null || value === "") return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return todayKey(value);
+  const match = String(value).match(/^(\d{4}-\d{2}-\d{2})/);
+  return match?.[1] ?? null;
+}
+
 /** Lowercase, collapse space, strip combining marks — kind to typed answers. */
 export function normalizePt(value: string): string {
   return value

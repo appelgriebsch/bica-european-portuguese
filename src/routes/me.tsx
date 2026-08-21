@@ -8,6 +8,7 @@ import { lessons, vocabFromCompleted, workingLevel } from "@/data/curriculum";
 import { signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useProgress } from "@/lib/progress-store";
+import { syncProgressWithAccount } from "@/lib/sync-progress";
 
 export const Route = createFileRoute("/me")({ component: MePage });
 
@@ -17,6 +18,9 @@ function MePage() {
   const xp = useProgress((s) => s.xp);
   const streak = useProgress((s) => s.streak);
   const floor = useProgress((s) => s.floor);
+  const lastSyncedAt = useProgress((s) => s.lastSyncedAt);
+  const syncing = useProgress((s) => s.syncing);
+  const syncError = useProgress((s) => s.syncError);
   const doneIds = Object.keys(completed);
   const doneSet = new Set(doneIds);
   const lessonDone = lessons.filter((l) => doneSet.has(l.id)).length;
@@ -39,9 +43,24 @@ function MePage() {
               <p className="font-medium">{user.displayName ?? "Signed in"}</p>
               <p className="text-sm text-muted">{user.primaryEmail}</p>
               <p className="mt-2 text-sm text-subtle">
-                Lessons on this account follow you. If a device is behind, open
-                Bica there while signed in — it will catch up.
+                {syncing
+                  ? "Saving this path to the account…"
+                  : syncError
+                    ? syncError
+                    : lastSyncedAt
+                      ? "Path saved to this account — it follows you on any browser you sign in with."
+                      : "Lessons on this account follow you. If a device is behind, open Bica there while signed in."}
               </p>
+              {user && !syncing ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2 px-0"
+                  onClick={() => void syncProgressWithAccount()}
+                >
+                  {syncError ? "Try again" : "Refresh from account"}
+                </Button>
+              ) : null}
             </div>
             <Button variant="ghost" size="sm" onClick={() => void signOut()}>
               Sign out

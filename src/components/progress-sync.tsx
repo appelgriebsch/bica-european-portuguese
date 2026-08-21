@@ -1,13 +1,11 @@
 import { useEffect } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { fetchProgress, saveProgressSnapshot } from "@/lib/progress-server";
 import { useProgress } from "@/lib/progress-store";
+import { syncProgressWithAccount } from "@/lib/sync-progress";
 
 /**
  * Pull the account, union it with this device, push the union back.
- * Runs on sign-in, on return to the tab, and when the line comes back —
- * not once, and never writes an empty snapshot over a full one (the
- * server takes greatest() / jsonb merge).
+ * Runs on sign-in, on return to the tab, and when the line comes back.
  */
 export function ProgressSync() {
   const { user, isPending } = useCurrentUserState();
@@ -15,25 +13,28 @@ export function ProgressSync() {
   const userId = user?.id ?? null;
 
   useEffect(() => {
+    if (useProgress.getState().hydrated) return;
+    const persist = useProgress.persist;
+    const unsub = persist.onFinishHydration(() => {
+      useProgress.getState().markHydrated();
+    });
+    if (persist.hasHydrated()) useProgress.getState().markHydrated();
+    else void persist.rehydrate();
+    const fallback = window.setTimeout(() => useProgress.getState().markHydrated(), 800);
+    return () => {
+      unsub();
+      window.clearTimeout(fallback);
+    };
+  }, []);
+
+  useEffect(() => {
     if (isPending || !userId || !hydrated) return;
 
     let cancelled = false;
-    let inFlight = false;
 
     async function sync() {
-      if (cancelled || inFlight) return;
-      inFlight = true;
-      try {
-        const remote = await fetchProgress();
-        if (cancelled) return;
-        useProgress.getState().mergeRemote(remote);
-        await saveProgressSnapshot({ data: useProgress.getState().snapshot() });
-        if (!cancelled) useProgress.getState().markSynced();
-      } catch {
-        /* still local — retry on the next focus / online */
-      } finally {
-        inFlight = false;
-      }
+      if (cancelled) return;
+      await syncProgressWithAccount();
     }
 
     void sync();

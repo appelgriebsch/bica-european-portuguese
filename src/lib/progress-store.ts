@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { CefrLevel } from "@/data/types";
 import { gradeCard, type SrsCard } from "@/lib/srs";
-import { todayKey, yesterdayKey } from "@/lib/utils";
+import { asDayKey, todayKey, yesterdayKey } from "@/lib/utils";
 
 export type LessonResult = {
   quizScore: number;
@@ -17,6 +17,7 @@ export type ProgressSnapshot = {
   streak: number;
   lastStudyDate: string | null;
   cards: Record<string, SrsCard>;
+  floor: CefrLevel;
 };
 
 export type ProgressState = {
@@ -28,8 +29,12 @@ export type ProgressState = {
   cards: Record<string, SrsCard>;
   hydrated: boolean;
   lastSyncedAt: string | null;
+  syncing: boolean;
+  syncError: string | null;
   markHydrated: () => void;
   markSynced: () => void;
+  setSyncing: (syncing: boolean) => void;
+  setSyncError: (syncError: string | null) => void;
   setFloor: (level: CefrLevel) => void;
   completeLesson: (lessonId: string, result: Omit<LessonResult, "completedAt">) => void;
   gradeVocab: (cardId: string, knew: boolean) => void;
@@ -37,6 +42,8 @@ export type ProgressState = {
   mergeRemote: (remote: ProgressSnapshot) => void;
   snapshot: () => ProgressSnapshot;
 };
+
+const rank: Record<CefrLevel, number> = { A1: 0, A2: 1, B1: 2, B2: 3, C1: 4 };
 
 function nextStreak(last: string | null, today: string): number {
   if (last === today) return -1;
@@ -67,8 +74,12 @@ export const useProgress = create<ProgressState>()(
       cards: {},
       hydrated: false,
       lastSyncedAt: null,
+      syncing: false,
+      syncError: null,
       markHydrated: () => set({ hydrated: true }),
-      markSynced: () => set({ lastSyncedAt: new Date().toISOString() }),
+      markSynced: () => set({ lastSyncedAt: new Date().toISOString(), syncError: null, syncing: false }),
+      setSyncing: (syncing) => set({ syncing }),
+      setSyncError: (syncError) => set({ syncError, syncing: false }),
       setFloor: (level) => set({ floor: level }),
       completeLesson: (lessonId, result) => {
         const today = todayKey();
@@ -120,7 +131,7 @@ export const useProgress = create<ProgressState>()(
       },
       mergeRemote: (remote) => {
         const local = get();
-        const completed = { ...remote.completed };
+        const completed = { ...(remote.completed ?? {}) };
         for (const [id, row] of Object.entries(local.completed)) {
           const other = completed[id];
           if (!other || row.quizScore > other.quizScore) completed[id] = row;
@@ -132,13 +143,20 @@ export const useProgress = create<ProgressState>()(
             cards[id] = row;
           }
         }
-        const xp = Math.max(local.xp, remote.xp);
-        const streak = Math.max(local.streak, remote.streak);
+        const localDay = asDayKey(local.lastStudyDate);
+        const remoteDay = asDayKey(remote.lastStudyDate);
         const lastStudyDate =
-          (local.lastStudyDate ?? "") > (remote.lastStudyDate ?? "")
-            ? local.lastStudyDate
-            : remote.lastStudyDate;
-        set({ completed, cards, xp, streak, lastStudyDate });
+          (localDay ?? "") > (remoteDay ?? "") ? localDay : remoteDay;
+        const remoteFloor = remote.floor ?? "A1";
+        const floor = rank[local.floor] >= rank[remoteFloor] ? local.floor : remoteFloor;
+        set({
+          completed,
+          cards,
+          xp: Math.max(local.xp, remote.xp),
+          streak: Math.max(local.streak, remote.streak),
+          lastStudyDate,
+          floor,
+        });
       },
       snapshot: () => {
         const s = get();
@@ -146,8 +164,9 @@ export const useProgress = create<ProgressState>()(
           completed: s.completed,
           xp: s.xp,
           streak: s.streak,
-          lastStudyDate: s.lastStudyDate,
+          lastStudyDate: asDayKey(s.lastStudyDate),
           cards: s.cards,
+          floor: s.floor,
         };
       },
     }),
@@ -161,8 +180,9 @@ export const useProgress = create<ProgressState>()(
         floor: s.floor,
         cards: s.cards,
       }),
-      onRehydrateStorage: () => () => {
-        useProgress.getState().markHydrated();
+      onRehydrateStorage: () => (_state, error) => {
+        if (!error) useProgress.getState().markHydrated();
+        else useProgress.getState().markHydrated();
       },
     },
   ),
