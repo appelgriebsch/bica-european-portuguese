@@ -1,11 +1,11 @@
-/* Bica offline cache.
+/* Bica offline cache + notification click.
  *
  * Must not intercept module scripts — Safari reports that as
  * "Importing a module script failed" and the page dies.
  * Navigations stay network-first so a new deploy is never hidden
  * behind a cached shell that points at deleted /assets hashes.
  */
-const VERSION = "bica-offline-v2";
+const VERSION = "bica-offline-v3";
 const PAGES = VERSION + "-pages";
 const RUNTIME = VERSION + "-runtime";
 const ASSETS = VERSION + "-assets";
@@ -50,6 +50,33 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = "/";
+  event.waitUntil(
+    (async () => {
+      const all = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+      for (const client of all) {
+        if ("focus" in client) {
+          await client.focus();
+          if ("navigate" in client) {
+            try {
+              await client.navigate(target);
+            } catch {
+              /* older clients */
+            }
+          }
+          return;
+        }
+      }
+      if (self.clients.openWindow) await self.clients.openWindow(target);
+    })(),
+  );
+});
+
 function isNetworkOnly(url) {
   const p = url.pathname;
   return (
@@ -73,8 +100,6 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
   if (isNetworkOnly(url)) return;
-  // Let the browser load JS itself. Intercepting module scripts on Safari
-  // (and claiming the page mid-load) is what broke the public site.
   if (isScriptRequest(req)) return;
 
   if (req.mode === "navigate") {

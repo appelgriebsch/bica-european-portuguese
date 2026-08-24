@@ -29,17 +29,21 @@ function isEmbeddedFrame() {
   }
 }
 
-function isStandaloneDisplay() {
+export function isStandaloneDisplay() {
   if (typeof window === "undefined") return false;
   const mq = window.matchMedia("(display-mode: standalone)").matches;
-  const ios = "standalone" in navigator && Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
+  const ios =
+    "standalone" in navigator &&
+    Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
   return mq || ios;
 }
 
 function isApplePhone() {
   if (typeof navigator === "undefined") return false;
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
 }
 
 /** Registers the offline worker on a published, top-level Bica — not in the preview iframe, not during local HMR. */
@@ -113,8 +117,8 @@ export function InstallHint({ className }: { className?: string }) {
           <h2 className="font-display text-xl font-medium">On your phone</h2>
           <p className="mt-1 text-sm text-muted">
             {apple
-              ? "Share, then Add to Home Screen. After that, the path works without a signal."
-              : "Install Bica from the browser menu. After that, the path works without a signal."}
+              ? "Share, then Add to Home Screen. After that, the path works without a signal — and you can turn on a daily reminder."
+              : "Install Bica from the browser menu. After that, the path works without a signal — and you can turn on a daily reminder."}
           </p>
         </div>
       </div>

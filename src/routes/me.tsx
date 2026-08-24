@@ -3,6 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { SpeakButton } from "@/components/speak-button";
 import { StartLevelPicker } from "@/components/start-level";
+import { DailyReminder } from "@/components/daily-reminder";
 import { InstallHint } from "@/components/pwa";
 import { lessons, vocabFromCompleted, workingLevel } from "@/data/curriculum";
 import { signOut } from "@/lib/auth/client";
@@ -105,6 +106,8 @@ function MePage() {
           Today will offer the next unfinished lesson from this level up.
         </p>
       </section>
+
+      <DailyReminder className="mt-8" />
 
       <InstallHint className="mt-8" />
 
