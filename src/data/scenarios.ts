@@ -13,7 +13,7 @@ export const speakScenarios: SpeakScenario[] = [
     openerPt: "Bom dia. Então, o que vai ser?",
     openerEn: "Good morning. So, what will it be?",
     goals: ["Order a bica or galão", "Ask the price", "Say para aqui or para levar"],
-    image: "/scenes/pastelaria.svg",
+    image: "/scenes/cafe.jpg",
   },
   {
     id: "direcoes",
@@ -41,7 +41,7 @@ export const speakScenarios: SpeakScenario[] = [
     openerPt: "Boa tarde. Em que posso ajudar?",
     openerEn: "Good afternoon. How can I help?",
     goals: ["Ask for ida e volta", "Confirm the platform", "Check the next comboio"],
-    image: "/scenes/ticket.svg",
+    image: "/scenes/tram.jpg",
   },
   {
     id: "origem",
@@ -55,7 +55,7 @@ export const speakScenarios: SpeakScenario[] = [
     openerPt: "Boa tarde. Desculpe, de onde é o senhor?",
     openerEn: "Good afternoon. Excuse me — where are you from?",
     goals: ["Say sou alemão / alemã", "Say vivo em…", "Say estou a aprender português"],
-    image: "/scenes/stairwell.svg",
+    image: "/scenes/cafe.jpg",
   },
   {
     id: "planos",
@@ -69,7 +69,7 @@ export const speakScenarios: SpeakScenario[] = [
     openerPt: "Olá! Então, vais ter tempo amanhã à noite?",
     openerEn: "Hi! So, will you have time tomorrow night?",
     goals: ["Propose a time with que tal", "Accept or suggest another", "Close with combinado"],
-    image: "/scenes/phone.svg",
+    image: "/scenes/cafe.jpg",
   },
   {
     id: "trabalho-chat",
@@ -83,7 +83,7 @@ export const speakScenarios: SpeakScenario[] = [
     openerPt: "E então, o que faz? Se não é indiscrição.",
     openerEn: "So, what do you do? If it's not too nosy.",
     goals: ["Use trabalho em / com", "Say estou de férias if true", "Ask e o senhor?"],
-    image: "/scenes/tasca.svg",
+    image: "/scenes/cafe.jpg",
   },
   {
     id: "farmacia",
@@ -97,7 +97,7 @@ export const speakScenarios: SpeakScenario[] = [
     openerPt: "Boa tarde. Diga.",
     openerEn: "Good afternoon. Go ahead.",
     goals: ["Use dói-me", "Answer há quanto tempo", "Ask quanto custa"],
-    image: "/scenes/farmacia.svg",
+    image: "/scenes/cafe.jpg",
   },
   {
     id: "fim-de-semana",
@@ -125,7 +125,7 @@ export const speakScenarios: SpeakScenario[] = [
     openerPt: "Ouviu as notícias? Outra vez obras na Liberdade.",
     openerEn: "Did you hear the news? Roadworks on Liberdade again.",
     goals: ["Refer to what you heard", "Use portanto / pois", "Say what you'll do instead"],
-    image: "/scenes/kitchen-radio.svg",
+    image: "/scenes/radio.jpg",
   },
   {
     id: "livro",
@@ -153,7 +153,7 @@ export const speakScenarios: SpeakScenario[] = [
     openerPt: "E tu, o que achas? Esta cidade ainda é para quem cá vive?",
     openerEn: "And you, what do you think? Is this city still for the people who live here?",
     goals: ["Use por um lado / por outro", "Hedge with diria que", "Leave the door open"],
-    image: "/scenes/dinner.svg",
+    image: "/scenes/cafe.jpg",
   },
   {
     id: "saudade-talk",
@@ -167,7 +167,7 @@ export const speakScenarios: SpeakScenario[] = [
     openerPt: "Já te sentes à-vontade, ou ainda tens saudades de casa?",
     openerEn: "Do you feel at ease yet, or do you still miss home?",
     goals: ["Use ter saudades de", "Qualify with já menos", "Ask them something back"],
-    image: "/scenes/balcony.svg",
+    image: "/scenes/cafe.jpg",
   },
   {
     id: "mesa-serio",
@@ -181,6 +181,6 @@ export const speakScenarios: SpeakScenario[] = [
     openerPt: "Esta cidade já não é para quem cá vive. Ponto. Ou ainda achas que não?",
     openerEn: "This city is no longer for the people who live here. Full stop. Or do you still think otherwise?",
     goals: ["Use ainda que + subjunctive", "Quote without owning: há quem diga", "Land with podemos ficar por aqui"],
-    image: "/scenes/dinner.svg",
+    image: "/scenes/cafe.jpg",
   },
 ];
