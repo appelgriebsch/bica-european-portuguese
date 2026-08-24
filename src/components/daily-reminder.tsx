@@ -63,8 +63,6 @@ export function DailyReminder({ className }: { className?: string }) {
     };
   }, [standalone, prefs.enabled, prefs.time, tryNudge]);
 
-  if (!standalone) return null;
-
   async function enable() {
     setBusy(true);
     try {
@@ -93,6 +91,33 @@ export function DailyReminder({ className }: { className?: string }) {
     const next = { ...prefs, time };
     saveReminderPrefs(next);
     setPrefs(next);
+  }
+
+  // Always show the section on You so people discover it.
+  // Controls only work after install (standalone); otherwise nudge them to install.
+  if (!standalone) {
+    return (
+      <section
+        className={cn(
+          "rounded-[var(--radius-lg)] bg-surface p-4 shadow-[var(--shadow-border)]",
+          className,
+        )}
+      >
+        <div className="flex items-start gap-3">
+          <Bell className="mt-0.5 size-5 shrink-0 text-accent" />
+          <div className="min-w-0 flex-1">
+            <h2 className="font-display text-xl font-medium">Daily reminder</h2>
+            <p className="mt-1 text-sm text-muted">
+              Install Bica on your home screen first. Then you can pick a time and get a nudge
+              if the day is still empty.
+            </p>
+            <p className="mt-3 text-sm text-subtle">
+              On iPhone: Share → Add to Home Screen. On Android: browser menu → Install app.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (
