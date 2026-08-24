@@ -130,7 +130,6 @@ export function isDocumentPath(pathname) {
   return (
     !path.startsWith("/__grok/") &&
     !path.startsWith("/api/") &&
-    !path.startsWith("/auth/") &&
     !path.startsWith("/@") &&
     !path.startsWith("/node_modules") &&
     !/\.[a-z0-9]+$/i.test(path)
@@ -153,38 +152,23 @@ export function stripInstallParams(url) {
 }
 
 export function renderInstallPageHtml(template, { host, url } = {}) {
-  const siteTitle = String(snapshotOgIdentity().site?.title ?? "").trim();
-  const name = siteTitle || appNameFromHost(host);
   return String(template)
-    .replaceAll("{{APP_NAME}}", escapeHtml(name))
+    .replaceAll("{{APP_NAME}}", escapeHtml(appNameFromHost(host)))
     .replaceAll("{{APP_URL}}", escapeHtml(stripInstallParams(url)));
 }
 
-export function renderWebManifest(hostHeader, options = {}) {
-  // Prefer the app's own title (site.json) so published apps never fall
-  // back to the platform default "Grok App" when Host is rewritten.
-  const site = snapshotOgIdentity().site ?? {};
-  const fromSite = String(options.title ?? site.title ?? "").trim();
-  const fromHost = appNameFromHost(hostHeader);
-  const name =
-    fromSite ||
-    (fromHost && fromHost !== DEFAULT_APP_NAME ? fromHost : "") ||
-    DEFAULT_APP_NAME;
-  const shortName = String(options.shortName ?? name).trim() || name;
-  let themeColor = String(options.themeColor ?? site.color ?? "").trim();
-  if (!themeColor) themeColor = "#000000";
-  else if (!themeColor.startsWith("#")) themeColor = `#${themeColor}`;
-  const backgroundColor = String(options.backgroundColor ?? themeColor).trim() || themeColor;
+export function renderWebManifest(hostHeader) {
+  const name = appNameFromHost(hostHeader);
   return JSON.stringify(
     {
       name,
-      short_name: shortName,
+      short_name: name,
       id: "/",
       start_url: "/",
       scope: "/",
       display: "standalone",
-      background_color: backgroundColor,
-      theme_color: themeColor,
+      background_color: "#000000",
+      theme_color: "#000000",
       icons: [
         {
           src: "/__grok/icon-180.png",
@@ -198,9 +182,7 @@ export function renderWebManifest(hostHeader, options = {}) {
   );
 }
 
-export function grokPwaHeadTags(appName = DEFAULT_APP_NAME, themeColor = "#000000") {
-  let color = String(themeColor ?? "#000000").trim() || "#000000";
-  if (!color.startsWith("#")) color = `#${color}`;
+export function grokPwaHeadTags(appName = DEFAULT_APP_NAME) {
   return [
     // Standalone display comes from the manifest ("display": "standalone");
     // the legacy *-web-app-capable metas it replaces are deliberately absent.
@@ -214,7 +196,7 @@ export function grokPwaHeadTags(appName = DEFAULT_APP_NAME, themeColor = "#00000
       "apple-mobile-web-app-status-bar-style",
       '<meta name="apple-mobile-web-app-status-bar-style" content="black">',
     ],
-    ["theme-color", `<meta name="theme-color" content="${escapeHtml(color)}">`],
+    ["theme-color", '<meta name="theme-color" content="#000000">'],
   ];
 }
 
@@ -362,12 +344,10 @@ export function grokOgHeadTags({
   const publicHost = resolvePublicHost(host);
   const tags = [
     `<meta name="twitter:card" content="summary_large_image">`,
+    `<meta property="og:title" content="${escapeHtml(title)}">`,
   ];
-  if (publicHost) {
-    tags.push(`<meta property="og:title" content="${escapeHtml(title)}">`);
-  }
   const description = String(site.description ?? "").trim();
-  if (description && publicHost) {
+  if (description) {
     tags.push(`<meta property="og:description" content="${escapeHtml(description)}">`);
   }
   if (String(site.type ?? "").toLowerCase() === "x:game") {
@@ -399,9 +379,7 @@ export function stripShareMetaTags(html) {
   return String(html).replace(/<meta\b[^>]*>/gi, (tag) => {
     const attrs = [...tag.matchAll(/\b(?:property|name)\s*=\s*["']([^"']+)["']/gi)];
     for (const match of attrs) {
-      const key = String(match[1]).toLowerCase();
-      if (key === "twitter:card") continue;
-      if (SHARE_META_KEYS.has(key)) return "";
+      if (SHARE_META_KEYS.has(String(match[1]).toLowerCase())) return "";
     }
     return tag;
   });
@@ -420,18 +398,6 @@ function insertAfterHeadOpen(html, snippet) {
 function insertBeforeHeadClose(html, snippet) {
   if (/<\/head>/i.test(html)) return html.replace(/<\/head>/i, `${snippet}</head>`);
   return insertAfterHeadOpen(html, snippet);
-}
-
-function coerceHeadCtx(appNameOrCtx, projectId, creator, creatorId) {
-  if (appNameOrCtx == null || typeof appNameOrCtx === "string") {
-    return {
-      appName: appNameOrCtx || undefined,
-      projectId,
-      creator,
-      creatorId,
-    };
-  }
-  return appNameOrCtx;
 }
 
 export function normalizeHeadContext(ctx = {}) {
@@ -456,21 +422,19 @@ export function normalizeHeadContext(ctx = {}) {
   };
 }
 
-export function injectGrokPwaHead(html, appNameOrCtx = {}, projectId, creator, creatorId) {
+export function injectGrokPwaHead(html, ctx = {}) {
   if (typeof html !== "string") return html;
-  const ctx = coerceHeadCtx(appNameOrCtx, projectId, creator, creatorId);
-  const explicitName = String(ctx.appName ?? "").trim();
-  const { site, projectId: pid, creator: cr, creatorId: cid, host, cwd } =
-    normalizeHeadContext(ctx);
+  const { site, projectId, creator, creatorId, host, cwd } = normalizeHeadContext(ctx);
   const documentTitle = titleFromDocument(html);
-  const appName =
-    explicitName ||
-    resolveOgTitle(site, ctx.appName ?? DEFAULT_APP_NAME, host, documentTitle);
+  const appName = resolveOgTitle(
+    site,
+    ctx.appName ?? DEFAULT_APP_NAME,
+    host,
+    documentTitle,
+  );
   let next = stripShareMetaTags(html);
-  const hadTwitterCard = /name=["']twitter:card["']/i.test(html);
 
-  const themeColor = String(site.color ?? "").trim() || "#000000";
-  const missing = grokPwaHeadTags(appName, themeColor)
+  const missing = grokPwaHeadTags(appName)
     .filter(([key]) => {
       if (key === "manifest") return !next.includes('href="/__grok/manifest.webmanifest"');
       if (key === "apple-touch-icon") return !next.includes('href="/__grok/icon-180.png"');
@@ -478,24 +442,24 @@ export function injectGrokPwaHead(html, appNameOrCtx = {}, projectId, creator, c
     })
     .map(([, tag]) => tag);
 
-  const ogTags = grokOgHeadTags({ host, appName, site, documentTitle, cwd }).filter(
-    (tag) => !(hadTwitterCard && tag.includes('twitter:card')),
+  next = insertAfterHeadOpen(
+    next,
+    grokOgHeadTags({ host, appName, site, documentTitle, cwd }).join(""),
   );
-  next = insertAfterHeadOpen(next, ogTags.join(""));
 
   if (!next.includes("/grok-app-builder/extensions.js")) {
-    missing.push(...grokExtensionsHeadTags(pid));
-  } else if (pid && !next.includes('name="grok-project-id"')) {
-    missing.push(`<meta name="grok-project-id" content="${escapeHtml(pid)}">`);
+    missing.push(...grokExtensionsHeadTags(projectId));
+  } else if (projectId && !next.includes('name="grok-project-id"')) {
+    missing.push(`<meta name="grok-project-id" content="${escapeHtml(projectId)}">`);
   }
   if (
-    pid &&
+    projectId &&
     !next.includes('property="grok:app_id"') &&
     !next.includes("property='grok:app_id'")
   ) {
-    missing.push(`<meta property="grok:app_id" content="${escapeHtml(pid)}">`);
+    missing.push(`<meta property="grok:app_id" content="${escapeHtml(projectId)}">`);
   }
-  const creatorTags = grokXCreatorHeadTags(cr, cid);
+  const creatorTags = grokXCreatorHeadTags(creator, creatorId);
   if (creatorTags.length > 0) {
     const hasCreator =
       next.includes('property="x:creator" content=') ||
@@ -518,8 +482,7 @@ function findHeadClose(buf) {
  * appears inside a UTF-8 continuation byte), overwrites share-card metas,
  * then passes later chunks through so streaming SSR keeps streaming.
  */
-export function createHeadInjector(appNameOrCtx = {}) {
-  const ctx = coerceHeadCtx(appNameOrCtx);
+export function createHeadInjector(ctx = {}) {
   const normalized = normalizeHeadContext(ctx);
 
   /** @type {Buffer[]} */

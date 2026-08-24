@@ -213,6 +213,38 @@ export function nextLesson(id: string): Lesson | undefined {
   return lessons[i + 1];
 }
 
+export function firstLessonOf(level: CefrLevel): Lesson | undefined {
+  return lessons.find((l) => l.level === level);
+}
+
+export function nextCefr(level: CefrLevel): CefrLevel | undefined {
+  return levels[cefrRank[level] + 1]?.id;
+}
+
+export function isLevelComplete(
+  completed: Set<string> | Record<string, unknown>,
+  level: CefrLevel,
+): boolean {
+  const has =
+    completed instanceof Set
+      ? (id: string) => completed.has(id)
+      : (id: string) => Boolean((completed as Record<string, unknown>)[id]);
+  const inLevel = lessonsForLevel(level);
+  return inLevel.length > 0 && inLevel.every((l) => has(l.id));
+}
+
+/** True when this lesson is the one that just closed its CEFR band. */
+export function newlyCompletedLevel(
+  itemId: string,
+  completedBefore: Record<string, unknown>,
+): CefrLevel | null {
+  const lesson = getLesson(itemId);
+  if (!lesson) return null;
+  if (isLevelComplete(completedBefore, lesson.level)) return null;
+  const after = { ...completedBefore, [itemId]: true };
+  return isLevelComplete(after, lesson.level) ? lesson.level : null;
+}
+
 export function firstIncomplete(completedIds: Set<string>, floor: CefrLevel = "A1"): Lesson {
   const min = cefrRank[floor];
   const pool = lessons.filter((l) => cefrRank[l.level] >= min);

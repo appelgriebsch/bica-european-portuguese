@@ -61,9 +61,11 @@
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-stagger: 40ms;
   --motion-quick: 150ms;
   --motion-fast: 250ms;
   --motion-slow: 400ms;
+  --motion-emphasis: 500ms;
 }
 
 /* Night kitchen: same cream as ink, azulejo catching the lamp — not generic OLED. */
@@ -170,3 +172,48 @@ img.scene {
   outline: 1px solid color-mix(in srgb, var(--color-fg) 12%, transparent);
   outline-offset: -1px;
 }
+
+/* One-shot: last lesson of a CEFR band. Split pieces, not the whole card. */
+.level-up-enter {
+  opacity: 0;
+  transform: translateY(12px);
+  filter: blur(4px);
+  animation: level-up-in var(--motion-slow) var(--ease-smooth-out) both;
+}
+
+@keyframes level-up-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.level-seal {
+  transform-origin: center;
+  animation: level-seal-in var(--motion-emphasis) var(--ease-out) both;
+}
+
+@keyframes level-seal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.level-seal-check {
+  stroke-dasharray: 28;
+  stroke-dashoffset: 28;
+  animation: level-seal-draw var(--motion-emphasis) var(--ease-out) 180ms both;
+}
+
+@keyframes level-seal-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+

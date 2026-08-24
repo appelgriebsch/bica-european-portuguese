@@ -1,7 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, Clock3, PenLine, WholeWord } from "lucide-react";
+import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
-import { grammarDrills, lessons, levels, units, verbDesks } from "@/data/curriculum";
+import { LevelCompleteOverlay } from "@/components/level-complete";
+import {
+  grammarDrills,
+  isLevelComplete,
+  lessons,
+  levels,
+  units,
+  verbDesks,
+} from "@/data/curriculum";
+import type { CefrLevel } from "@/data/types";
 import { useProgress } from "@/lib/progress-store";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +19,7 @@ export const Route = createFileRoute("/path")({ component: PathPage });
 
 function PathPage() {
   const completed = useProgress((s) => s.completed);
+  const [review, setReview] = useState<CefrLevel | null>(null);
 
   return (
     <AppShell>
@@ -18,18 +29,32 @@ function PathPage() {
         what they already know. After each level, grammar and a verb desk.
       </p>
 
+      {review && <LevelCompleteOverlay level={review} onClose={() => setReview(null)} />}
+
       <div className="mt-8 space-y-12">
         {levels.map((lv) => {
           const levelUnits = units.filter((u) => u.level === lv.id);
           const drills = grammarDrills.filter((d) => d.level === lv.id);
           const desks = verbDesks.filter((d) => d.level === lv.id);
+          const done = isLevelComplete(completed, lv.id);
           return (
             <div key={lv.id}>
               <p className="text-xs font-medium uppercase tracking-wider text-accent">
                 {lv.id}
+                {done ? " · Concluído" : ""}
               </p>
               <h2 className="font-display text-2xl font-medium">{lv.title}</h2>
               <p className="mt-1 text-sm text-muted">{lv.blurb}</p>
+              {done && (
+                <button
+                  type="button"
+                  onClick={() => setReview(lv.id)}
+                  className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-md)] bg-success px-4 text-sm font-medium text-success-fg transition-transform duration-[var(--motion-quick)] ease-[var(--ease-out)] active:scale-[0.96]"
+                >
+                  <Check className="size-4" />
+                  You can now
+                </button>
+              )}
 
               <div className="mt-5 space-y-8">
                 {levelUnits.map((unit) => {

@@ -1,15 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
+import { LevelComplete } from "@/components/level-complete";
 import { QuizBlock } from "@/components/quiz-block";
 import { SpeakButton } from "@/components/speak-button";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { getLesson, nextLesson } from "@/data/curriculum";
-import type { Lesson, LessonSection } from "@/data/types";
+import { getLesson, newlyCompletedLevel, nextLesson } from "@/data/curriculum";
+import type { CefrLevel, Lesson, LessonSection } from "@/data/types";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { persistCompletion } from "@/lib/record-progress";
 import { sceneImageFor } from "@/lib/scene-image";
+import { useProgress } from "@/lib/progress-store";
 import { cn } from "@/lib/utils";
 
 export function LessonPlayer({ id }: { id: string }) {
@@ -32,6 +34,7 @@ function Player({ lesson }: { lesson: Lesson }) {
   const [step, setStep] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [done, setDone] = useState(false);
+  const [levelUp, setLevelUp] = useState<CefrLevel | null>(null);
   const user = useCurrentUser();
 
   const totalSteps = steps.length;
@@ -43,6 +46,7 @@ function Player({ lesson }: { lesson: Lesson }) {
   }
 
   async function finishQuiz(finalCorrect: number) {
+    const unlocked = newlyCompletedLevel(lesson.id, useProgress.getState().completed);
     setCorrectCount(finalCorrect);
     await persistCompletion(
       lesson.id,
@@ -50,6 +54,7 @@ function Player({ lesson }: { lesson: Lesson }) {
       lesson.quiz.length,
       Boolean(user),
     );
+    setLevelUp(unlocked);
     setDone(true);
   }
 
@@ -66,7 +71,9 @@ function Player({ lesson }: { lesson: Lesson }) {
           </Button>
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-medium text-muted">
-              {lesson.level} · {lesson.titlePt}
+              {levelUp
+                ? `${levelUp} · Concluído`
+                : `${lesson.level} · ${lesson.titlePt}`}
             </p>
             <Progress value={pct} className="mt-1" />
           </div>
@@ -76,18 +83,27 @@ function Player({ lesson }: { lesson: Lesson }) {
 
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-5">
         {done ? (
-          <DoneCard titlePt={lesson.titlePt} correct={correctCount} total={lesson.quiz.length}>
-            {nxt && (
-              <Button asChild>
-                <Link to="/lesson/$id" params={{ id: nxt.id }}>
-                  Next lesson
-                  <ArrowRight />
-                </Link>
-              </Button>
+          <DoneCard
+            titlePt={lesson.titlePt}
+            correct={correctCount}
+            total={lesson.quiz.length}
+            levelUp={levelUp}
+          >
+            {levelUp ? undefined : (
+              <>
+                {nxt && (
+                  <Button asChild>
+                    <Link to="/lesson/$id" params={{ id: nxt.id }}>
+                      Next lesson
+                      <ArrowRight />
+                    </Link>
+                  </Button>
+                )}
+                <Button asChild variant="outline">
+                  <Link to="/path">Path</Link>
+                </Button>
+              </>
             )}
-            <Button asChild variant="outline">
-              <Link to="/path">Path</Link>
-            </Button>
           </DoneCard>
         ) : current?.type === "quiz" ? (
           <QuizBlock questions={lesson.quiz} onFinished={(n) => void finishQuiz(n)} />
@@ -247,13 +263,25 @@ export function DoneCard({
   titlePt,
   correct,
   total,
+  levelUp,
   children,
 }: {
   titlePt: string;
   correct: number;
   total: number;
+  levelUp?: CefrLevel | null;
   children?: ReactNode;
 }) {
+  if (levelUp) {
+    return (
+      <LevelComplete
+        level={levelUp}
+        footnote={`${titlePt} · ${correct}/${total} on the quiz`}
+      >
+        {children}
+      </LevelComplete>
+    );
+  }
   const pass = total > 0 && correct / total >= 0.6;
   return (
     <article className="flex flex-1 flex-col">

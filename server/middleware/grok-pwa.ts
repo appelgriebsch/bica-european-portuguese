@@ -71,21 +71,12 @@ export default async function grokPwaMiddleware(
   const urlWithQuery = path + event.url.search;
 
   if (path === "/__grok/manifest.webmanifest" || path === "/__grok/manifest.json") {
-    const site = grokOgIdentity.site ?? {};
-    return new Response(
-      renderWebManifest(requestHost(event), {
-        title: String(site.title ?? "").trim() || "Bica",
-        shortName: "Bica",
-        themeColor: String(site.color ?? "1E4D73").trim() || "1E4D73",
-        backgroundColor: "#f3eee6",
-      }),
-      {
-        headers: {
-          "content-type": "application/manifest+json; charset=utf-8",
-          "cache-control": "no-cache",
-        },
+    return new Response(renderWebManifest(requestHost(event)), {
+      headers: {
+        "content-type": "application/manifest+json; charset=utf-8",
+        "cache-control": "no-cache",
       },
-    );
+    });
   }
 
   if (
