@@ -9,6 +9,7 @@ import { getLesson, nextLesson } from "@/data/curriculum";
 import type { Lesson, LessonSection } from "@/data/types";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { persistCompletion } from "@/lib/record-progress";
+import { sceneImageFor } from "@/lib/scene-image";
 import { cn } from "@/lib/utils";
 
 export function LessonPlayer({ id }: { id: string }) {
@@ -193,9 +194,17 @@ function SectionView({ section }: { section: LessonSection }) {
   }
 
   if (section.type === "dialogue") {
+    const sceneSrc = sceneImageFor(section.setting);
     return (
       <article>
-        <h2 className="font-display text-2xl font-medium">A short scene</h2>
+        <div className="overflow-hidden rounded-[var(--radius-lg)] shadow-[var(--shadow-border)]">
+          <img
+            src={sceneSrc}
+            alt=""
+            className="scene aspect-[16/9] w-full object-cover"
+          />
+        </div>
+        <h2 className="mt-4 font-display text-2xl font-medium">A short scene</h2>
         <p className="mt-1 text-sm text-muted">{section.setting}</p>
         <ol className="mt-4 space-y-2">
           {section.lines.map((line, i) => (
