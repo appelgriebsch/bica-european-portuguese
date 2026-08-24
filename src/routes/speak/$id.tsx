@@ -8,6 +8,7 @@ import { speakScenarios } from "@/data/curriculum";
 import { sendChat } from "@/lib/chat-server";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { sceneImageFor } from "@/lib/scene-image";
 import { cn } from "@/lib/utils";
 import { useOnline } from "@/components/pwa";
 
@@ -97,6 +98,14 @@ function SpeakScene() {
           </p>
           <h1 className="truncate font-display text-xl font-medium">{scenario.titlePt}</h1>
         </div>
+      </div>
+
+      <div className="mb-4 overflow-hidden rounded-[var(--radius-lg)] shadow-[var(--shadow-border)]">
+        <img
+          src={scenario.image || sceneImageFor(scenario.setting)}
+          alt=""
+          className="scene aspect-[16/9] w-full object-cover"
+        />
       </div>
 
       <p className="rounded-[var(--radius-md)] bg-soft px-3 py-2 text-sm text-fg">
