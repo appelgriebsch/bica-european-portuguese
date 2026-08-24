@@ -36,10 +36,46 @@ const snapshotSchema = z.object({
     .default({}),
   xp: z.coerce.number(),
   streak: z.coerce.number(),
-  lastStudyDate: z.string().nullable(),
+  lastStudyDate: z.string().nullable().optional(),
   cards: z.record(z.string(), srsCardSchema).optional(),
   floor: z.enum(["A1", "A2", "B1", "B2", "C1"]).optional(),
 });
+
+function unwrapPayload(input: unknown): unknown {
+  if (input && typeof input === "object" && "data" in input) {
+    return (input as { data: unknown }).data;
+  }
+  return input;
+}
+
+function asIso(value: unknown): string {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString();
+  const text = String(value ?? "").trim();
+  if (text) return text;
+  return new Date().toISOString();
+}
+
+function rethrowProgress(err: unknown): never {
+  if (err && typeof err === "object" && "status" in err) {
+    const status = Number((err as { status?: number }).status);
+    if (status === 401 || status === 403) throw err;
+  }
+  const raw = err instanceof Error ? err.message : String(err);
+  console.error("[bica] progress:", raw);
+  if (raw === "Unauthorized" || /Unauthorized/i.test(raw)) {
+    throw err instanceof Error ? err : new Error("Unauthorized");
+  }
+  if (/Forbidden|cross-site|CrossSite/i.test(raw)) {
+    throw err instanceof Error ? err : new Error("Forbidden: cross-site request blocked");
+  }
+  if (/relation|does not exist|column/i.test(raw)) {
+    throw new Error("relation does not exist");
+  }
+  if (/timeout|ECONNREFUSED|ENOTFOUND|ECONNRESET|fetch failed|network|connect|Neon|ssl/i.test(raw)) {
+    throw new Error("Failed to fetch");
+  }
+  throw new Error(raw || "Could not reach the account.");
+}
 
 function parseCards(raw: unknown): Record<string, SrsCard> {
   if (raw && typeof raw === "object" && !Array.isArray(raw)) {
@@ -62,52 +98,57 @@ function parseCards(raw: unknown): Record<string, SrsCard> {
 export const fetchProgress = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    const sql = await getSql();
-    const rows = await sql<{
-      lesson_id: string;
-      quiz_score: number;
-      quiz_total: number;
-      xp: number;
-      completed_at: string | null;
-    }>`
-      select lesson_id, quiz_score, quiz_total, xp, completed_at
-      from lesson_progress
-      where user_id = ${context.userId}
-    `;
-    const stats = await sql<{
-      streak: number;
-      last_study_date: string | null;
-      total_xp: number;
-      vocab_cards: unknown;
-    }>`
-      select streak, last_study_date, total_xp, vocab_cards
-      from user_stats
-      where user_id = ${context.userId}
-    `;
-    const completed: Record<string, LessonResult> = {};
-    for (const r of rows) {
-      completed[r.lesson_id] = {
-        quizScore: Number(r.quiz_score) || 0,
-        quizTotal: Number(r.quiz_total) || 0,
-        xp: Number(r.xp) || 0,
-        completedAt: r.completed_at ?? new Date().toISOString(),
+    try {
+      const sql = await getSql();
+      const rows = await sql<{
+        lesson_id: string;
+        quiz_score: number;
+        quiz_total: number;
+        xp: number;
+        completed_at: string | Date | null;
+      }>`
+        select lesson_id, quiz_score, quiz_total, xp, completed_at
+        from lesson_progress
+        where user_id = ${context.userId}
+      `;
+      const stats = await sql<{
+        streak: number;
+        last_study_date: string | null;
+        total_xp: number;
+        vocab_cards: unknown;
+      }>`
+        select streak, last_study_date, total_xp, vocab_cards
+        from user_stats
+        where user_id = ${context.userId}
+      `;
+      const completed: Record<string, LessonResult> = {};
+      for (const r of rows) {
+        completed[r.lesson_id] = {
+          quizScore: Number(r.quiz_score) || 0,
+          quizTotal: Number(r.quiz_total) || 0,
+          xp: Number(r.xp) || 0,
+          completedAt: asIso(r.completed_at),
+        };
+      }
+      const s = stats[0];
+      return {
+        completed,
+        xp: Number(s?.total_xp) || 0,
+        streak: Number(s?.streak) || 0,
+        lastStudyDate: asDayKey(s?.last_study_date),
+        cards: parseCards(s?.vocab_cards),
+        floor: "A1" as CefrLevel,
       };
+    } catch (err) {
+      rethrowProgress(err);
     }
-    const s = stats[0];
-    return {
-      completed,
-      xp: Number(s?.total_xp) || 0,
-      streak: Number(s?.streak) || 0,
-      lastStudyDate: asDayKey(s?.last_study_date),
-      cards: parseCards(s?.vocab_cards),
-      floor: "A1" as CefrLevel,
-    };
   });
 
 export const saveLessonProgress = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: unknown) => resultSchema.parse(input))
+  .validator((input: unknown) => resultSchema.parse(unwrapPayload(input)))
   .handler(async ({ context, data }) => {
+    try {
     const sql = await getSql();
     const completedAt = new Date().toISOString();
     await sql`
@@ -129,12 +170,16 @@ export const saveLessonProgress = createServerFn({ method: "POST" })
         updated_at = now()
     `;
     return { ok: true as const };
+    } catch (err) {
+      rethrowProgress(err);
+    }
   });
 
 export const saveProgressSnapshot = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: unknown) => snapshotSchema.parse(input))
+  .validator((input: unknown) => snapshotSchema.parse(unwrapPayload(input)))
   .handler(async ({ context, data }) => {
+    try {
     const sql = await getSql();
     const cardsJson = JSON.stringify(data.cards ?? {});
     const lastStudy = asDayKey(data.lastStudyDate);
@@ -183,4 +228,7 @@ export const saveProgressSnapshot = createServerFn({ method: "POST" })
       `;
     }
     return { ok: true as const };
+    } catch (err) {
+      rethrowProgress(err);
+    }
   });

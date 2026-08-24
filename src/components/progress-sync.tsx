@@ -34,7 +34,11 @@ export function ProgressSync() {
 
     async function sync() {
       if (cancelled) return;
-      await syncProgressWithAccount();
+      const first = await syncProgressWithAccount();
+      if (cancelled || first.ok) return;
+      // Cookie / Neon can lag one beat after the X callback lands.
+      await new Promise((r) => window.setTimeout(r, 1200));
+      if (!cancelled) await syncProgressWithAccount();
     }
 
     void sync();
