@@ -4,7 +4,7 @@
  * app documents. The deployed-app half lives in server/middleware/grok-pwa.ts;
  * both share scripts/grok-pwa-shared.mjs.
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -53,7 +53,28 @@ function serveGrokPwa(middlewares) {
     }
 
     if (pathOnly === "/__grok/manifest.webmanifest" || pathOnly === "/__grok/manifest.json") {
-      const body = Buffer.from(renderWebManifest(requestHost(req)), "utf8");
+      // Prefer the app title from site.json so the install sheet never says "Grok App".
+      let siteTitle = "Bica";
+      let siteColor = "1E4D73";
+      try {
+        const sitePath = join(process.cwd(), "src/lib/og/site.json");
+        if (existsSync(sitePath)) {
+          const site = JSON.parse(readFileSync(sitePath, "utf8"));
+          if (site.title) siteTitle = String(site.title).trim() || siteTitle;
+          if (site.color) siteColor = String(site.color).trim() || siteColor;
+        }
+      } catch {
+        /* keep defaults */
+      }
+      const body = Buffer.from(
+        renderWebManifest(requestHost(req), {
+          title: siteTitle,
+          shortName: "Bica",
+          themeColor: siteColor,
+          backgroundColor: "#f3eee6",
+        }),
+        "utf8",
+      );
       res.statusCode = 200;
       res.setHeader("content-type", "application/manifest+json; charset=utf-8");
       res.setHeader("cache-control", "no-cache");
@@ -113,8 +134,6 @@ function wrapHtmlResponses(middlewares, cwd) {
       const isHtml = String(res.getHeader("content-type") ?? "").includes("text/html");
       const encoded = Boolean(res.getHeader("content-encoding"));
       mode = isHtml && !encoded ? "inject" : "passthrough";
-      // Streaming SSR flushes headers before the first body chunk, so the
-      // header may no longer be removable — chunked responses don't carry one.
       if (mode === "inject" && !res.headersSent) res.removeHeader("content-length");
       return mode;
     };
@@ -172,16 +191,11 @@ export function grokPwaPlugin() {
       });
     },
     configureServer(server) {
-      // Registered directly (not in a returned post-hook) so both run BEFORE
-      // TanStack Start's SSR middleware, like the auth-popup plugin.
       serveGrokPwa(server.middlewares);
       wrapHtmlResponses(server.middlewares, root);
     },
     configurePreviewServer(server) {
       serveGrokPwa(server.middlewares);
-      // Post-hook: preview registers compression between the direct hooks and
-      // the post-hooks, and the injector must wrap AFTER compression so it
-      // sees plaintext HTML (compression then compresses the injected output).
       return () => {
         wrapHtmlResponses(server.middlewares, root);
       };
