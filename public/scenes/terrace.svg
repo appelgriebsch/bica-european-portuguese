@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="420" viewBox="0 0 800 420" role="img" aria-label="Terrace">
+  <rect width="800" height="420" fill="#f3eee6"/>
+  <ellipse cx="320" cy="220" rx="40" ry="55" fill="#c45c26" opacity="0.45"/>
+  <ellipse cx="420" cy="220" rx="40" ry="55" fill="#c45c26" opacity="0.45"/>
+  <rect x="280" y="280" width="180" height="14" rx="4" fill="#1a2330" opacity="0.3"/>
+  <path d="M0 320 L800 280 L800 420 L0 420 Z" fill="#1E4D73" opacity="0.1"/>
+  <text x="60" y="100" font-family="Georgia, serif" font-size="28" fill="#1E4D73">Esplanada</text>
+</svg>

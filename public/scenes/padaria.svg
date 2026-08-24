@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="420" viewBox="0 0 800 420" role="img" aria-label="Padaria">
+  <rect width="800" height="420" fill="#f3eee6"/>
+  <rect x="80" y="100" width="180" height="220" rx="8" fill="#e8e0d4"/>
+  <rect x="100" y="130" width="140" height="30" rx="4" fill="#c45c26" opacity="0.5"/>
+  <rect x="100" y="180" width="140" height="30" rx="4" fill="#c45c26" opacity="0.4"/>
+  <rect x="100" y="230" width="140" height="30" rx="4" fill="#c45c26" opacity="0.35"/>
+  <rect x="320" y="160" width="360" height="100" rx="8" fill="#1E4D73" opacity="0.15"/>
+  <text x="80" y="360" font-family="Georgia, serif" font-size="28" fill="#1E4D73">Padaria</text>
+</svg>
