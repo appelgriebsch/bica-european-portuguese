@@ -18,10 +18,25 @@ export async function syncProgressWithAccount(): Promise<{ ok: boolean; error?: 
     return { ok: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not reach the account.";
-    const friendly =
-      message === "Unauthorized" || message.includes("Unauthorized")
-        ? "Sign in again to save the path to this account."
-        : "Could not reach the account. Try again.";
+    console.warn("[bica] progress sync failed:", message);
+    let friendly = "Could not reach the account. Try again.";
+    if (message === "Unauthorized" || message.includes("Unauthorized")) {
+      friendly = "Sign in again to save the path to this account.";
+    } else if (
+      message.includes("Forbidden") ||
+      message.includes("cross-site") ||
+      message.includes("CrossSite")
+    ) {
+      friendly = "Sign-in could not be verified on this device. Close extra tabs and try again.";
+    } else if (
+      message.includes("Failed to fetch") ||
+      message.includes("NetworkError") ||
+      message.includes("network")
+    ) {
+      friendly = "No connection to the account right now. Check the line and try again.";
+    } else if (message.includes("relation") || message.includes("does not exist")) {
+      friendly = "Account storage is still setting up. Wait a moment and try again.";
+    }
     useProgress.getState().setSyncError(friendly);
     return { ok: false, error: friendly };
   } finally {
