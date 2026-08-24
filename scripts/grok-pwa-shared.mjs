@@ -30,28 +30,35 @@ const SHARE_META_KEYS = new Set([
 
 export function escapeHtml(value) {
   return String(value)
-    .replaceAll("&", "&")
-    .replaceAll("<", "<")
-    .replaceAll(">", ">")
-    .replaceAll('"', """)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 }
 
+/** Inverse of escapeHtml. Decode &amp; last so a single pass undoes one encode. */
 function unescapeHtml(value) {
   return String(value)
-    .replaceAll("<", "<")
-    .replaceAll(">", ">")
-    .replaceAll(""", '"')
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&quot;", '"')
     .replaceAll("&#39;", "'")
-    .replaceAll("&", "&");
+    .replaceAll("&amp;", "&");
 }
 
+/** 6-digit hex for the og.grok.me placeholder, or "" if site.color is missing/invalid. */
 function placeholderCardColor(site = {}) {
   const raw = String(site.color ?? "").trim();
   const hex = raw.startsWith("#") ? raw.slice(1) : raw;
   return /^[0-9a-fA-F]{6}$/.test(hex) ? hex : "";
 }
 
+/**
+ * "wild-race.grok.me" → "Wild Race". Only published app hosts encode the
+ * display name in the first label. Preview / guest hosts are image origins
+ * only — slugifying them produced internal names like "Hds Abc 3000 Xy".
+ */
 export function appNameFromHost(hostHeader) {
   const host = String(hostHeader ?? "")
     .split(",")[0]
@@ -74,25 +81,35 @@ export function appNameFromHost(hostHeader) {
   );
 }
 
+/** True for Vercel system domains. Envoy rewrites origin Host to these; they SSO-protect `/og.jpg`. */
 function isVercelSystemHost(host) {
   return (
+    host === "vercel.app" ||
     host.endsWith(".vercel.app") ||
-    host.endsWith(".vercel.sh") ||
-    host === "localhost" ||
-    host.startsWith("127.")
+    host === "vercel.com" ||
+    host.endsWith(".vercel.com")
   );
 }
 
-function publicAppHost(value) {
-  const host = String(value ?? "")
+/** Hostname suitable for absolute og:image URLs. Preview guests (X-Forwarded-Host) are allowed. */
+export function publicAppHost(hostHeader) {
+  const host = String(hostHeader ?? "")
     .split(",")[0]
     .trim()
     .split(":")[0]
     .toLowerCase();
-  if (!host || isVercelSystemHost(host)) return "";
+  if (!host || !/^[a-z0-9.-]+$/.test(host) || !host.includes(".")) return "";
+  if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)) return "";
+  if (isVercelSystemHost(host)) return "";
   return host;
 }
 
+/**
+ * Published apps always use `VITE_PUBLIC_HOSTNAME` (the grok.me host the
+ * deployer injects). Live preview has no such env, so fall back to the
+ * request host / X-Forwarded-Host. Never prefer request Host on a published
+ * app — Envoy rewrites it to `*.vercel.app`.
+ */
 export function resolvePublicHost(hostHeader) {
   return (
     publicAppHost(process.env?.VITE_PUBLIC_HOSTNAME) || publicAppHost(hostHeader)
@@ -107,11 +124,13 @@ export function isInstallQuery(url) {
   return (install === "1" || install === "true") && platform === "ios";
 }
 
+/** Paths that can carry an app document (vs assets / API / internals). */
 export function isDocumentPath(pathname) {
   const path = String(pathname ?? "");
   return (
     !path.startsWith("/__grok/") &&
     !path.startsWith("/api/") &&
+    !path.startsWith("/auth/") &&
     !path.startsWith("/@") &&
     !path.startsWith("/node_modules") &&
     !/\.[a-z0-9]+$/i.test(path)
@@ -123,6 +142,7 @@ export function acceptsHtml(accept) {
   return value === "" || value.includes("text/html") || value.includes("*/*");
 }
 
+/** The same URL without the install-tutorial params (used as the app link). */
 export function stripInstallParams(url) {
   const [path = "/", query = ""] = String(url ?? "/").split("?", 2);
   const params = new URLSearchParams(query);
@@ -133,20 +153,25 @@ export function stripInstallParams(url) {
 }
 
 export function renderInstallPageHtml(template, { host, url } = {}) {
+  const siteTitle = String(snapshotOgIdentity().site?.title ?? "").trim();
+  const name = siteTitle || appNameFromHost(host);
   return String(template)
-    .replaceAll("{{APP_NAME}}", escapeHtml(appNameFromHost(host)))
+    .replaceAll("{{APP_NAME}}", escapeHtml(name))
     .replaceAll("{{APP_URL}}", escapeHtml(stripInstallParams(url)));
 }
 
 export function renderWebManifest(hostHeader, options = {}) {
-  const fromSite = String(options.title ?? "").trim();
+  // Prefer the app's own title (site.json) so published apps never fall
+  // back to the platform default "Grok App" when Host is rewritten.
+  const site = snapshotOgIdentity().site ?? {};
+  const fromSite = String(options.title ?? site.title ?? "").trim();
   const fromHost = appNameFromHost(hostHeader);
   const name =
     fromSite ||
     (fromHost && fromHost !== DEFAULT_APP_NAME ? fromHost : "") ||
     DEFAULT_APP_NAME;
   const shortName = String(options.shortName ?? name).trim() || name;
-  let themeColor = String(options.themeColor ?? "").trim();
+  let themeColor = String(options.themeColor ?? site.color ?? "").trim();
   if (!themeColor) themeColor = "#000000";
   else if (!themeColor.startsWith("#")) themeColor = `#${themeColor}`;
   const backgroundColor = String(options.backgroundColor ?? themeColor).trim() || themeColor;
@@ -177,6 +202,8 @@ export function grokPwaHeadTags(appName = DEFAULT_APP_NAME, themeColor = "#00000
   let color = String(themeColor ?? "#000000").trim() || "#000000";
   if (!color.startsWith("#")) color = `#${color}`;
   return [
+    // Standalone display comes from the manifest ("display": "standalone");
+    // the legacy *-web-app-capable metas it replaces are deliberately absent.
     ["manifest", '<link rel="manifest" href="/__grok/manifest.webmanifest">'],
     ["apple-touch-icon", '<link rel="apple-touch-icon" href="/__grok/icon-180.png">'],
     [
@@ -189,6 +216,93 @@ export function grokPwaHeadTags(appName = DEFAULT_APP_NAME, themeColor = "#00000
     ],
     ["theme-color", `<meta name="theme-color" content="${escapeHtml(color)}">`],
   ];
+}
+
+export const GROK_EXTENSIONS_SCRIPT_SRC = "https://grok.com/grok-app-builder/extensions.js";
+
+export function readGrokProjectId() {
+  const fromProcess = typeof process !== "undefined" ? process.env?.VITE_PROJECT_ID : "";
+  return String(fromProcess ?? "").trim();
+}
+
+export function readXCreator() {
+  const fromProcess = typeof process !== "undefined" ? process.env?.X_CREATOR : "";
+  return String(fromProcess ?? "").trim();
+}
+
+export function readXCreatorId() {
+  const fromProcess = typeof process !== "undefined" ? process.env?.X_CREATOR_ID : "";
+  return String(fromProcess ?? "").trim();
+}
+
+export function grokXCreatorHeadTags(creator = readXCreator(), creatorId = readXCreatorId()) {
+  const name = String(creator ?? "").trim();
+  const id = String(creatorId ?? "").trim();
+  if (!name || !id) return [];
+  return [
+    `<meta property="x:creator" content="${escapeHtml(name)}">`,
+    `<meta property="x:creator:id" content="${escapeHtml(id)}">`,
+  ];
+}
+
+/** Platform "Created with Grok" banner — injected into every HTML document. */
+export function grokExtensionsHeadTags(projectId = readGrokProjectId()) {
+  const id = escapeHtml(projectId);
+  const tags = [];
+  if (projectId) {
+    tags.push(`<meta name="grok-project-id" content="${id}">`);
+  }
+  tags.push(
+    `<script src="${GROK_EXTENSIONS_SCRIPT_SRC}"${
+      projectId ? ` data-project-id="${id}"` : ""
+    } defer></script>`,
+  );
+  return tags;
+}
+
+export function readOgSite(cwd = process.cwd()) {
+  try {
+    const raw = readFileSync(join(cwd, OG_SITE_REL_PATH), "utf8");
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Public path of an on-disk share card, or "" if neither file exists. */
+export function ogCardPublicPath(cwd = process.cwd()) {
+  if (existsSync(join(cwd, "public/og.jpg"))) return "/og.jpg";
+  if (existsSync(join(cwd, "public/og.png"))) return "/og.png";
+  return "";
+}
+
+function detectCustomOgCard(cwd = process.cwd(), site = {}) {
+  if (ogCardPublicPath(cwd)) return true;
+  // Vercel runtime has no public/: trust a bake that already saw the file.
+  return siteHasCustomCard(site) || Boolean(String(site.image ?? "").trim());
+}
+
+/** Snapshot for Vite/Nitro to bake into the server bundle (Vercel has no workspace FS). */
+export function snapshotOgIdentity(cwd = process.cwd()) {
+  const site = { ...readOgSite(cwd) };
+  const disk = ogCardPublicPath(cwd);
+  if (disk) {
+    site.card = "custom";
+    site.image = disk;
+  } else {
+    // site.json `card=custom` without a file must not bake a 404 /og.jpg URL.
+    if (siteHasCustomCard(site)) delete site.card;
+    if (site.image) delete site.image;
+  }
+  if (existsSync(join(cwd, "public/x-banner.jpg"))) {
+    site.banner = site.banner || "/x-banner.jpg";
+  }
+  return { site };
+}
+
+export function customOgAssetPath(cwd = process.cwd()) {
+  return ogCardPublicPath(cwd) || "/og.jpg";
 }
 
 export function ogServiceUrl() {
@@ -221,22 +335,16 @@ export function siteHasCustomCard(site = {}) {
   return String(site.card ?? "").toLowerCase() === "custom";
 }
 
-function ogCardPublicPath(cwd = process.cwd()) {
-  for (const name of ["og.jpg", "og.png"]) {
-    const abs = join(cwd, "public", name);
-    if (existsSync(abs)) return `/${name}`;
-  }
-  return "";
-}
-
-function detectCustomOgCard(cwd, site) {
-  return Boolean(ogCardPublicPath(cwd) || siteHasCustomCard(site));
-}
-
+/**
+ * Preview: public/og.jpg|png on disk.
+ * Vercel: the bake (`card=custom` / `image`) because the function cannot stat public/.
+ * Otherwise empty — caller emits the og.grok.me placeholder.
+ */
 export function resolveOgCardAsset(site = {}, cwd = process.cwd()) {
   return ogCardPublicPath(cwd) || (detectCustomOgCard(cwd, site) ? String(site.image ?? "").trim() || "/og.jpg" : "");
 }
 
+/** Stamp `card=custom` when public/og.jpg or public/og.png is on disk. */
 function applyCustomCardFromFs(site, cwd) {
   const disk = ogCardPublicPath(cwd);
   if (!disk) return site;
@@ -254,68 +362,84 @@ export function grokOgHeadTags({
   const publicHost = resolvePublicHost(host);
   const tags = [
     `<meta name="twitter:card" content="summary_large_image">`,
-    `<meta property="og:title" content="${escapeHtml(title)}">`,
   ];
+  if (publicHost) {
+    tags.push(`<meta property="og:title" content="${escapeHtml(title)}">`);
+  }
   const description = String(site.description ?? "").trim();
-  if (description) {
+  if (description && publicHost) {
     tags.push(`<meta property="og:description" content="${escapeHtml(description)}">`);
-    tags.push(`<meta name="twitter:description" content="${escapeHtml(description)}">`);
   }
-  const cardAsset = resolveOgCardAsset(site, cwd);
-  if (cardAsset && publicHost) {
-    const abs = cardAsset.startsWith("http") ? cardAsset : `https://${publicHost}${cardAsset}`;
-    tags.push(`<meta property="og:image" content="${escapeHtml(abs)}">`);
-    tags.push(`<meta name="twitter:image" content="${escapeHtml(abs)}">`);
-  } else if (publicHost) {
-    const color = placeholderCardColor(site);
-    const qs = new URLSearchParams({ host: publicHost, title });
-    if (color) qs.set("color", color);
-    const placeholder = `${ogServiceUrl()}/v1/card.png?${qs}`;
-    tags.push(`<meta property="og:image" content="${escapeHtml(placeholder)}">`);
-    tags.push(`<meta name="twitter:image" content="${escapeHtml(placeholder)}">`);
+  if (String(site.type ?? "").toLowerCase() === "x:game") {
+    tags.push(`<meta property="og:type" content="x:game">`);
   }
-  tags.push(`<meta name="twitter:title" content="${escapeHtml(title)}">`);
+  if (publicHost) {
+    const asset = resolveOgCardAsset(site, cwd);
+    const custom = Boolean(asset);
+    let image = custom
+      ? `https://${publicHost}${asset.startsWith("/") ? asset : `/${asset}`}`
+      : `${ogServiceUrl()}/v1/card.png?host=${encodeURIComponent(publicHost)}&title=${encodeURIComponent(title)}`;
+    const color = !custom ? placeholderCardColor(site) : "";
+    if (color) image += `&color=${encodeURIComponent(color)}`;
+    tags.push(`<meta property="og:image" content="${escapeHtml(image)}">`);
+    tags.push(`<meta property="og:image:width" content="1200">`);
+    tags.push(`<meta property="og:image:height" content="630">`);
+    const banner = String(site.banner ?? "").trim();
+    if (banner) {
+      const bannerUrl = `https://${publicHost}${banner.startsWith("/") ? banner : `/${banner}`}`;
+      tags.push(`<meta property="x:game:image" content="${escapeHtml(bannerUrl)}">`);
+      tags.push(`<meta property="x:game:image:width" content="1200">`);
+      tags.push(`<meta property="x:game:image:height" content="264">`);
+    }
+  }
   return tags;
 }
 
-export function snapshotOgIdentity(cwd = process.cwd()) {
-  const sitePath = join(cwd, OG_SITE_REL_PATH);
-  let site = {};
-  if (existsSync(sitePath)) {
-    try {
-      site = JSON.parse(readFileSync(sitePath, "utf8"));
-    } catch {
-      site = {};
+export function stripShareMetaTags(html) {
+  return String(html).replace(/<meta\b[^>]*>/gi, (tag) => {
+    const attrs = [...tag.matchAll(/\b(?:property|name)\s*=\s*["']([^"']+)["']/gi)];
+    for (const match of attrs) {
+      const key = String(match[1]).toLowerCase();
+      if (key === "twitter:card") continue;
+      if (SHARE_META_KEYS.has(key)) return "";
     }
-  }
-  return { site: applyCustomCardFromFs(site, cwd) };
-}
-
-function readGrokProjectId() {
-  return String(process.env?.VITE_PROJECT_ID ?? "").trim();
-}
-
-function readXCreator() {
-  return String(process.env?.VITE_X_CREATOR ?? "").trim();
-}
-
-function readXCreatorId() {
-  return String(process.env?.VITE_X_CREATOR_ID ?? "").trim();
-}
-
-function stripShareMetaTags(html) {
-  return String(html).replace(
-    /<meta\b[^>]*(?:property|name)=["'](?:og:|twitter:|x:game:)[^"']*["'][^>]*>\s*/gi,
-    "",
-  );
+    return tag;
+  });
 }
 
 function insertAfterHeadOpen(html, snippet) {
-  return String(html).replace(/<head\b[^>]*>/i, (m) => `${m}\n${snippet}`);
+  if (/<head\b[^>]*>/i.test(html)) {
+    return html.replace(/<head\b[^>]*>/i, (open) => `${open}${snippet}`);
+  }
+  if (/<html\b[^>]*>/i.test(html)) {
+    return html.replace(/<html\b[^>]*>/i, (open) => `${open}<head>${snippet}</head>`);
+  }
+  return `<!doctype html><html><head>${snippet}</head>${html}`;
+}
+
+function insertBeforeHeadClose(html, snippet) {
+  if (/<\/head>/i.test(html)) return html.replace(/<\/head>/i, `${snippet}</head>`);
+  return insertAfterHeadOpen(html, snippet);
+}
+
+function coerceHeadCtx(appNameOrCtx, projectId, creator, creatorId) {
+  if (appNameOrCtx == null || typeof appNameOrCtx === "string") {
+    return {
+      appName: appNameOrCtx || undefined,
+      projectId,
+      creator,
+      creatorId,
+    };
+  }
+  return appNameOrCtx;
 }
 
 export function normalizeHeadContext(ctx = {}) {
   const cwd = ctx.cwd ?? process.cwd();
+  // Middleware passes a baked `site`. Still consult the workspace so a
+  // public/og.jpg generated after that snapshot (or missed by a wrong cwd)
+  // wins over the og.grok.me placeholder. Vercel has no public/ to read, so
+  // a correct bake is unchanged.
   const site = applyCustomCardFromFs(
     ctx.site !== undefined ? ctx.site : snapshotOgIdentity(cwd).site,
     cwd,
@@ -332,60 +456,109 @@ export function normalizeHeadContext(ctx = {}) {
   };
 }
 
-export function injectGrokPwaHead(html, ctx = {}) {
+export function injectGrokPwaHead(html, appNameOrCtx = {}, projectId, creator, creatorId) {
   if (typeof html !== "string") return html;
-  const { site, projectId, creator, creatorId, host, cwd } = normalizeHeadContext(ctx);
+  const ctx = coerceHeadCtx(appNameOrCtx, projectId, creator, creatorId);
+  const explicitName = String(ctx.appName ?? "").trim();
+  const { site, projectId: pid, creator: cr, creatorId: cid, host, cwd } =
+    normalizeHeadContext(ctx);
   const documentTitle = titleFromDocument(html);
-  const appName = resolveOgTitle(
-    site,
-    ctx.appName ?? DEFAULT_APP_NAME,
-    host,
-    documentTitle,
-  );
+  const appName =
+    explicitName ||
+    resolveOgTitle(site, ctx.appName ?? DEFAULT_APP_NAME, host, documentTitle);
   let next = stripShareMetaTags(html);
+  const hadTwitterCard = /name=["']twitter:card["']/i.test(html);
 
   const themeColor = String(site.color ?? "").trim() || "#000000";
   const missing = grokPwaHeadTags(appName, themeColor)
     .filter(([key]) => {
       if (key === "manifest") return !next.includes('href="/__grok/manifest.webmanifest"');
       if (key === "apple-touch-icon") return !next.includes('href="/__grok/icon-180.png"');
-      return !next.includes(
-        key === "apple-mobile-web-app-title"
-          ? 'name="apple-mobile-web-app-title"'
-          : key === "theme-color"
-            ? 'name="theme-color"'
-            : key,
-      );
+      return !next.includes(`name="${key}"`);
     })
     .map(([, tag]) => tag);
 
-  const ogTags = grokOgHeadTags({ host, appName, site, documentTitle, cwd });
-  const snippet = [...missing, ...ogTags].join("\n");
-  if (!snippet) return next;
-  return insertAfterHeadOpen(next, snippet);
+  const ogTags = grokOgHeadTags({ host, appName, site, documentTitle, cwd }).filter(
+    (tag) => !(hadTwitterCard && tag.includes('twitter:card')),
+  );
+  next = insertAfterHeadOpen(next, ogTags.join(""));
+
+  if (!next.includes("/grok-app-builder/extensions.js")) {
+    missing.push(...grokExtensionsHeadTags(pid));
+  } else if (pid && !next.includes('name="grok-project-id"')) {
+    missing.push(`<meta name="grok-project-id" content="${escapeHtml(pid)}">`);
+  }
+  if (
+    pid &&
+    !next.includes('property="grok:app_id"') &&
+    !next.includes("property='grok:app_id'")
+  ) {
+    missing.push(`<meta property="grok:app_id" content="${escapeHtml(pid)}">`);
+  }
+  const creatorTags = grokXCreatorHeadTags(cr, cid);
+  if (creatorTags.length > 0) {
+    const hasCreator =
+      next.includes('property="x:creator" content=') ||
+      next.includes("property='x:creator' content=");
+    if (!hasCreator) missing.push(creatorTags[0]);
+    if (!next.includes('property="x:creator:id"')) missing.push(creatorTags[1]);
+  }
+
+  if (missing.length === 0) return next;
+  return insertBeforeHeadClose(next, missing.join(""));
 }
 
-export function createHeadInjector(ctx = {}) {
-  let buffer = "";
+function findHeadClose(buf) {
+  const at = buf.toString("latin1").search(/<\/head>/i);
+  return at;
+}
+
+/**
+ * Streaming head injector: buffers only until `</head>` (ASCII marker; never
+ * appears inside a UTF-8 continuation byte), overwrites share-card metas,
+ * then passes later chunks through so streaming SSR keeps streaming.
+ */
+export function createHeadInjector(appNameOrCtx = {}) {
+  const ctx = coerceHeadCtx(appNameOrCtx);
+  const normalized = normalizeHeadContext(ctx);
+
+  /** @type {Buffer[]} */
+  let pending = [];
   let done = false;
-  const decoder = new TextDecoder();
-  const encoder = new TextEncoder();
+
+  const apply = (html) =>
+    injectGrokPwaHead(html, {
+      appName: normalized.appName,
+      projectId: normalized.projectId,
+      creator: normalized.creator,
+      creatorId: normalized.creatorId,
+      host: normalized.host,
+      cwd: normalized.cwd,
+      site: normalized.site,
+    });
+
   return {
+    /** @param {Uint8Array | string} chunk @returns {Buffer[]} chunks ready to emit */
     push(chunk) {
-      if (done) return [chunk];
-      buffer += decoder.decode(chunk, { stream: true });
-      if (!/<\/head>/i.test(buffer) && buffer.length < 512_000) return [];
+      const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      if (done) return [buf];
+      pending.push(buf);
+      const joined = Buffer.concat(pending);
+      const at = findHeadClose(joined);
+      if (at === -1) return [];
       done = true;
-      const html = injectGrokPwaHead(buffer, ctx);
-      buffer = "";
-      return [encoder.encode(html)];
+      pending = [];
+      const closeLen = joined.toString("latin1", at).match(/^<\/head>/i)[0].length;
+      const head = apply(joined.subarray(0, at + closeLen).toString("utf8"));
+      return [Buffer.concat([Buffer.from(head, "utf8"), joined.subarray(at + closeLen)])];
     },
+    /** @returns {Buffer[]} whatever is still buffered (no `</head>` seen) */
     flush() {
-      if (!buffer) return [];
+      if (done || pending.length === 0) return [];
+      const rest = Buffer.concat(pending);
+      pending = [];
       done = true;
-      const html = injectGrokPwaHead(buffer, ctx);
-      buffer = "";
-      return [encoder.encode(html)];
+      return [Buffer.from(apply(rest.toString("utf8")), "utf8")];
     },
   };
 }
