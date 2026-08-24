@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="420" viewBox="0 0 800 420" role="img" aria-label="Balcony">
+  <rect width="800" height="420" fill="#f3eee6"/>
+  
+  <rect x="80" y="80" width="640" height="200" rx="8" fill="#e8e0d4"/>
+  <path d="M100 280 H700" stroke="#1E4D73" stroke-width="8" opacity="0.4"/>
+  <path d="M140 280 V200 M220 280 V200 M300 280 V200 M380 280 V200 M460 280 V200 M540 280 V200 M620 280 V200" stroke="#1E4D73" stroke-width="4" opacity="0.35"/>
+  <text x="80" y="360" font-family="Georgia, serif" font-size="28" fill="#1E4D73">Varanda</text>
+
+</svg>
